@@ -253,7 +253,17 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
         try {
           const response = await fetch(`/scaleup2026/user/${userId}`);
-          const result = await response.json();
+          
+          let result;
+          try {
+            const text = await response.text();
+            console.log(`Polling attempt ${attempt + 1} raw response:`, text);
+            result = text ? JSON.parse(text) : {};
+          } catch (parseError) {
+            console.error(`Polling attempt ${attempt + 1} - Failed to parse JSON:`, parseError);
+            continue; // Skip to next attempt
+          }
+          
           console.log(`Polling attempt ${attempt + 1}:`, { 
             status: response.status, 
             result,
@@ -306,7 +316,18 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         body: apiFormData,
       });
 
-      const result = await response.json();
+      let result;
+      try {
+        const text = await response.text();
+        console.log("Raw response:", text);
+        result = text ? JSON.parse(text) : {};
+      } catch (parseError) {
+        console.error("Failed to parse response:", parseError);
+        alert("Server returned invalid response. Please try again.");
+        setIsGenerating(false);
+        return;
+      }
+      
       console.log("Generate API Response:", { status: response.status, data: result });
 
       // Always store user_id when available so data is persisted even if image is delayed.

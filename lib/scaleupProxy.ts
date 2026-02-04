@@ -94,13 +94,61 @@ export const handleGenerateProxy = async (request: NextRequest) => {
     const contentType =
       upstreamResponse.headers.get("content-type") || "application/json";
     const body = await upstreamResponse.arrayBuffer();
+    const bodyText = new TextDecoder().decode(body);
 
     if (!upstreamResponse.ok) {
-      const bodyText = new TextDecoder().decode(body);
       console.error(
         `Backend error (${upstreamResponse.status}):`,
         bodyText
       );
+      
+      // If backend returned empty response, provide meaningful error
+      if (!bodyText || bodyText.trim() === "") {
+        return NextResponse.json(
+          {
+            error: "Backend error",
+            details: `Server returned ${upstreamResponse.status} with no response body`,
+          },
+          { status: upstreamResponse.status }
+        );
+      }
+      
+      // Try to parse backend error as JSON, fallback to plain text
+      try {
+        const errorData = JSON.parse(bodyText);
+        return NextResponse.json(errorData, { status: upstreamResponse.status });
+      } catch {
+        return NextResponse.json(
+          { error: "Backend error", details: bodyText },
+          { status: upstreamResponse.status }
+        );
+      }
+    }
+
+    // Success response - ensure it's valid JSON if content-type is JSON
+    if (contentType.includes("application/json")) {
+      if (!bodyText || bodyText.trim() === "") {
+        return NextResponse.json(
+          {
+            error: "Invalid response",
+            details: "Backend returned empty JSON response",
+          },
+          { status: 502 }
+        );
+      }
+      
+      try {
+        JSON.parse(bodyText); // Validate JSON
+      } catch {
+        console.error("Backend returned invalid JSON:", bodyText);
+        return NextResponse.json(
+          {
+            error: "Invalid response",
+            details: "Backend returned malformed JSON",
+          },
+          { status: 502 }
+        );
+      }
     }
 
     return new NextResponse(body, {
@@ -178,6 +226,35 @@ export const handleUserProxy = async (request: NextRequest) => {
     const contentType =
       upstreamResponse.headers.get("content-type") || "application/json";
     const body = await upstreamResponse.arrayBuffer();
+    const bodyText = new TextDecoder().decode(body);
+
+    // If backend returned empty response
+    if (!bodyText || bodyText.trim() === "") {
+      console.error(`Backend returned empty response (${upstreamResponse.status})`);
+      return NextResponse.json(
+        {
+          error: "Empty response",
+          details: "Backend returned no data",
+        },
+        { status: upstreamResponse.ok ? 502 : upstreamResponse.status }
+      );
+    }
+
+    // Validate JSON if content-type is JSON
+    if (contentType.includes("application/json")) {
+      try {
+        JSON.parse(bodyText);
+      } catch {
+        console.error("Backend returned invalid JSON:", bodyText);
+        return NextResponse.json(
+          {
+            error: "Invalid response",
+            details: "Backend returned malformed JSON",
+          },
+          { status: 502 }
+        );
+      }
+    }
 
     return new NextResponse(body, {
       status: upstreamResponse.status,
