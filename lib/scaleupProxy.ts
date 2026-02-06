@@ -443,3 +443,71 @@ export const handleOtpVerifyProxy = async (request: NextRequest) => {
     );
   }
 };
+
+export const handleRegisterProxy = async (request: NextRequest) => {
+  if (request.method !== "POST") {
+    return NextResponse.json(
+      { error: "Method Not Allowed" },
+      { status: 405 },
+    );
+  }
+
+  const payload = await readJsonBody(request);
+  console.log("Register - Received payload:", payload);
+
+  // Validate required fields
+  const requiredFields = ["name", "email", "phone_no", "district", "category", "organization"];
+  for (const field of requiredFields) {
+    if (!payload?.[field]) {
+      console.log(`Register - Missing ${field} in payload`);
+      return NextResponse.json(
+        { error: `${field} is required` },
+        { status: 400 },
+      );
+    }
+  }
+
+  const baseUrl = getBaseUrl();
+  if (!baseUrl) {
+    return NextResponse.json(
+      {
+        error: "Register service not configured",
+        details: "Set SCALEUP_API_BASE_URL to your backend service URL.",
+      },
+      { status: 501 },
+    );
+  }
+
+  console.log("Register - Sending to backend:", payload);
+
+  try {
+    const upstreamResponse = await fetch(`${baseUrl}/scaleup2026/register`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(30000),
+    });
+
+    const contentType =
+      upstreamResponse.headers.get("content-type") || "application/json";
+    const body = await upstreamResponse.arrayBuffer();
+    const bodyText = new TextDecoder().decode(body);
+
+    console.log("Register - Backend response status:", upstreamResponse.status);
+    console.log("Register - Backend response body:", bodyText);
+
+    return new NextResponse(body, {
+      status: upstreamResponse.status,
+      headers: { "content-type": contentType },
+    });
+  } catch (error: any) {
+    console.error("Failed to reach backend (Register):", error);
+    return NextResponse.json(
+      {
+        error: "Backend unreachable",
+        details: "Unable to register. Please try again later.",
+      },
+      { status: 502 },
+    );
+  }
+};
