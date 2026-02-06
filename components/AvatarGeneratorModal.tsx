@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "react-hot-toast";
 
 interface AvatarGeneratorModalProps {
   isOpen: boolean;
@@ -232,13 +233,13 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       const maxSize = 2 * 1024 * 1024;
 
       if (!allowedTypes.includes(file.type)) {
-        alert("Only PNG and JPEG images are allowed.");
+        toast.error("Only PNG and JPEG images are allowed.");
         e.target.value = "";
         return;
       }
 
       if (file.size > maxSize) {
-        alert("Image must be 2MB or smaller.");
+        toast.error("Image must be 2MB or smaller.");
         e.target.value = "";
         return;
       }
@@ -288,7 +289,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   const handleGenerate = async () => {
     // Validation
     if (!photoFile) {
-      alert("Please upload a photo");
+      toast.error("Please upload a photo");
       return;
     }
 
@@ -300,7 +301,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       !formData.category ||
       !formData.organization
     ) {
-      alert("Please fill all required fields");
+      toast.error("Please fill all required fields");
       return;
     }
 
@@ -364,6 +365,70 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       return "";
     };
 
+    const fetchGeneratedImageUrlByPhone = async (phoneNo: string) => {
+      const maxAttempts = 30;
+      const delayMs = 2000;
+
+      for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+        try {
+          const response = await fetch(
+            `/scaleup2026/user/${encodeURIComponent(phoneNo)}`,
+          );
+
+          let result;
+          try {
+            const text = await response.text();
+            console.log(
+              `Polling by phone attempt ${attempt + 1} raw response:`,
+              text,
+            );
+            result = text ? JSON.parse(text) : {};
+          } catch (parseError) {
+            console.error(
+              `Polling by phone attempt ${attempt + 1} - Failed to parse JSON:`,
+              parseError,
+            );
+            continue;
+          }
+
+          console.log(`Polling by phone attempt ${attempt + 1}:`, {
+            status: response.status,
+            result,
+            hasFinalImageUrl: !!result.final_image_url,
+            finalImageUrlValue: result.final_image_url,
+            allKeys: Object.keys(result),
+          });
+
+          if (response.ok && result.final_image_url) {
+            console.log("Image URL found:", result.final_image_url);
+            return result.final_image_url as string;
+          }
+
+          if (response.ok && result.generated_image_url) {
+            console.log(
+              "Image URL found (generated_image_url):",
+              result.generated_image_url,
+            );
+            return result.generated_image_url as string;
+          }
+
+          if (response.ok && result.image_url) {
+            console.log("Image URL found (image_url):", result.image_url);
+            return result.image_url as string;
+          }
+        } catch (error) {
+          console.error("Error polling generated image by phone:", error);
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+
+      console.error(
+        "Max polling attempts reached without finding image (phone lookup)",
+      );
+      return "";
+    };
+
     try {
       // Create FormData for API
       const apiFormData = new FormData();
@@ -389,7 +454,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         result = text ? JSON.parse(text) : {};
       } catch (parseError) {
         console.error("Failed to parse response:", parseError);
-        alert("Server returned invalid response. Please try again.");
+        toast.error("Server returned invalid response. Please try again.");
         setIsGenerating(false);
         return;
       }
@@ -398,6 +463,19 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         status: response.status,
         data: result,
       });
+
+      const isBackendProcessing =
+        response.status === 202 ||
+        result?.error === "Backend processing" ||
+        result?.status === 504;
+
+      if (isBackendProcessing) {
+        toast(
+          "Image generation started. Please wait a moment and try again to view the result.",
+        );
+        setIsGenerating(false);
+        return;
+      }
 
       // Always store user_id when available
       if (result?.user_id) {
@@ -419,7 +497,23 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
           return;
         }
         // If polling failed, show message
-        alert("Image generation in progress. Please try again in a moment.");
+        toast("Image generation in progress. Please try again in a moment.");
+        setIsGenerating(false);
+        return;
+      }
+
+      if (response.status === 202 && formData.phone_no) {
+        console.log(
+          "Backend is processing asynchronously (202), polling by phone...",
+        );
+        const imageUrl = await fetchGeneratedImageUrlByPhone(formData.phone_no);
+        if (imageUrl) {
+          setGeneratedImageUrl(imageUrl);
+          setIsGenerated(true);
+          setIsGenerating(false);
+          return;
+        }
+        toast("Image generation in progress. Please try again in a moment.");
         setIsGenerating(false);
         return;
       }
@@ -441,15 +535,29 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
           }
         }
 
+        if (formData.phone_no) {
+          console.log(
+            "Response not OK, polling for image by phone_no...",
+            formData.phone_no,
+          );
+          const imageUrl = await fetchGeneratedImageUrlByPhone(formData.phone_no);
+          if (imageUrl) {
+            setGeneratedImageUrl(imageUrl);
+            setIsGenerated(true);
+            setIsGenerating(false);
+            return;
+          }
+        }
+
         const errorMsg =
           result?.details || result?.error || "Failed to generate avatar";
         console.error("Generate API Error:", errorMsg);
 
         // For 504 timeout, suggest retry
         if (response.status === 504) {
-          alert(`${errorMsg}. Please wait a moment and try again.`);
+          toast.error(`${errorMsg}. Please wait a moment and try again.`);
         } else {
-          alert(`Error: ${errorMsg}`);
+          toast.error(`Error: ${errorMsg}`);
         }
 
         setIsGenerating(false);
@@ -474,7 +582,23 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
           setGeneratedImageUrl(imageUrl);
           setIsGenerated(true);
         } else {
-          alert(
+          toast(
+            "Image generation is taking longer than expected. Please try again.",
+          );
+        }
+        setIsGenerating(false);
+        return;
+      }
+
+      if (formData.phone_no) {
+        console.log("Polling for image with phone_no:", formData.phone_no);
+        const imageUrl = await fetchGeneratedImageUrlByPhone(formData.phone_no);
+        if (imageUrl) {
+          console.log("Image URL received from phone polling:", imageUrl);
+          setGeneratedImageUrl(imageUrl);
+          setIsGenerated(true);
+        } else {
+          toast(
             "Image generation is taking longer than expected. Please try again.",
           );
         }
@@ -487,13 +611,13 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         "Success response but missing image URL and user_id:",
         result,
       );
-      alert(
+      toast.error(
         "Image generation completed but image URL is missing. Please contact support.",
       );
       setIsGenerating(false);
     } catch (error) {
       console.error("Error generating avatar:", error);
-      alert("Error generating avatar. Please try again.");
+      toast.error("Error generating avatar. Please try again.");
       setIsGenerating(false);
     }
   };
@@ -516,6 +640,23 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       }
     }
 
+    if (!imageUrl && formData.phone_no) {
+      try {
+        const response = await fetch(
+          `/scaleup2026/user/${encodeURIComponent(formData.phone_no)}`,
+        );
+        const text = await response.text();
+        const result = text ? JSON.parse(text) : {};
+        const fetchedUrl = extractFinalImageUrl(result);
+        if (response.ok && fetchedUrl) {
+          imageUrl = fetchedUrl;
+          setGeneratedImageUrl(fetchedUrl);
+        }
+      } catch (error) {
+        console.error("Error fetching generated image by phone:", error);
+      }
+    }
+
     if (!imageUrl) return;
 
     try {
@@ -531,7 +672,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Error downloading image:", error);
-      alert("Error downloading image. Please try again.");
+      toast.error("Error downloading image. Please try again.");
     }
   };
 
