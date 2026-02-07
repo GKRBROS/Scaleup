@@ -299,31 +299,31 @@ export default function RegistrationModal({
         organization: formData.organization,
       };
 
-      try {
-        const registerResponse = await fetch(
-          "/scaleup2026/register",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(registerPayload),
-          }
-        );
+      // try {
+      //   const registerResponse = await fetch(
+      //     "/scaleup2026/register",
+      //     {
+      //       method: "POST",
+      //       headers: { "Content-Type": "application/json" },
+      //       body: JSON.stringify(registerPayload),
+      //     }
+      //   );
 
-        const registerResult = await registerResponse.json();
-        console.log("Register API Response:", registerResult);
+      //   const registerResult = await registerResponse.json();
+      //   console.log("Register API Response:", registerResult);
 
-        if (!registerResponse.ok) {
-          console.error("Register API error:", registerResult);
-          toast.error("Registration to backend failed. Please try again.");
-          setLoading(false);
-          return;
-        }
-      } catch (registerError) {
-        console.error("Register API call error:", registerError);
-        toast.error("Failed to complete registration. Please try again.");
-        setLoading(false);
-        return;
-      }
+      //   if (!registerResponse.ok) {
+      //     console.error("Register API error:", registerResult);
+      //     toast.error("Registration to backend failed. Please try again.");
+      //     setLoading(false);
+      //     return;
+      //   }
+      // } catch (registerError) {
+      //   console.error("Register API call error:", registerError);
+      //   toast.error("Failed to complete registration. Please try again.");
+      //   setLoading(false);
+      //   return;
+      // }
 
       // SUCCESS - Show success and open avatar modal with registration data
       toast.success("Registration successful ");

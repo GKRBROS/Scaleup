@@ -540,11 +540,12 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
       {showFloatingIcon && (
         <button
           onClick={openPhoneModal}
-          className="fixed bottom-8 right-8 z-50 w-20 h-20 rounded-full bg-gradient-to-br from-purple-600 to-purple-700 text-white shadow-2xl hover:shadow-purple-500/50 hover:from-purple-700 hover:to-purple-800 transition-all flex items-center justify-center hover:scale-110 transform duration-300 animate-bounce"
+          className="fixed bottom-8 right-8 z-50 w-20 h-20 rounded-full transition-all flex items-center justify-center hover:scale-110 transform duration-300 animate-bounce"
+          // className="fixed bottom-8 right-8 z-50 w-20 h-20 rounded-full bg-gradient-to-br from-purple-600 to-purple-700 text-white shadow-2xl hover:shadow-purple-500/50 hover:from-purple-700 hover:to-purple-800 transition-all flex items-center justify-center hover:scale-110 transform duration-300 animate-bounce"
           style={{ position: 'fixed' }}
           title="Generate AI Avatar"
         >
-          <img src="/AI.svg" alt="AI" className="h-10 w-10" />
+          <img src="/AI.png" alt="AI" className="h-30 w-35" />
         </button>
       )}
     </>
