@@ -301,7 +301,7 @@ export default function RegistrationModal({
 
       try {
         const registerResponse = await fetch(
-          "http://13.127.247.90/scaleup2026/register",
+          "https://scaleup.frameforge.one/scaleup2026/register",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

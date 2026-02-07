@@ -344,7 +344,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
         try {
           const response = await fetch(
-            `http://13.127.247.90/scaleup2026/user/${userId}`,
+            `https://scaleup.frameforge.one/scaleup2026/user/${userId}`,
           );
 
           let result;
@@ -404,7 +404,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
         try {
           const response = await fetch(
-            `http://13.127.247.90/scaleup2026/user/${encodeURIComponent(phoneNo)}`,
+            `https://scaleup.frameforge.one/scaleup2026/user/${encodeURIComponent(phoneNo)}`,
           );
 
           let result;
@@ -474,7 +474,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       apiFormData.append("photo", photoFile);
 
       // Call API
-      const response = await fetch("http://13.127.247.90/scaleup2026/generate", {
+      const response = await fetch("https://scaleup.frameforge.one/scaleup2026/generate", {
         method: "POST",
         body: apiFormData,
       });
@@ -663,7 +663,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     if (!imageUrl && generatedUserId) {
       try {
         const response = await fetch(
-          `http://13.127.247.90/scaleup2026/user/${generatedUserId}`,
+          `https://scaleup.frameforge.one/scaleup2026/user/${generatedUserId}`,
         );
         const text = await response.text();
         const result = text ? JSON.parse(text) : {};
@@ -680,7 +680,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     if (!imageUrl && formData.phone_no) {
       try {
         const response = await fetch(
-          `http://13.127.247.90/scaleup2026/user/${encodeURIComponent(formData.phone_no)}`,
+          `https://scaleup.frameforge.one/scaleup2026/user/${encodeURIComponent(formData.phone_no)}`,
         );
         const text = await response.text();
         const result = text ? JSON.parse(text) : {};

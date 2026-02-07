@@ -156,7 +156,7 @@ export function AiModalPop({ showFloatingIcon = true }: AiModalPopProps) {
         return;
       }
 
-      const response = await fetch("http://13.127.247.90/scaleup2026/otp/generate", {
+      const response = await fetch("https://scaleup.frameforge.one/scaleup2026/otp/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
