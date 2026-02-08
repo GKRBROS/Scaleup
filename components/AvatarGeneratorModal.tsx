@@ -632,7 +632,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   )}
 
   {/* Preview Area */}
-  <div className="flex-1 w-full h-full flex flex-col items-center justify-center pt-10 overflow-hidden">
+  <div className="relative w-full h-full rounded-2xl overflow-hidden">
   <AnimatePresence mode="wait">
     {isGenerating ? (
       <motion.div
@@ -654,16 +654,30 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
         {/* Foreground Fade Image */}
         <AnimatePresence mode="wait">
-          <motion.img
-            key={fgIndex}
-            src={loadingForegroundImages[fgIndex]}
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 1.05 }}
-            transition={{ duration: 0.8 }}
-            className="relative z-10 max-h-[65%] max-w-[80%] object-contain rounded-xl shadow-2xl pt-56"
-          />
-        </AnimatePresence>
+  <motion.img
+    key={fgIndex}
+    src={loadingForegroundImages[fgIndex]}
+    initial={{ opacity: 0, scale: 0.9 }}
+    animate={{ opacity: 1, scale: 1 }}
+    exit={{ opacity: 0, scale: 1.05 }}
+    transition={{ duration: 0.6, ease: "easeOut" }}
+    className="
+      absolute
+      left-1/2
+      top-1/2
+      -translate-x-1/2
+      -translate-y-1/2
+      z-10
+      max-h-[80%]
+      max-w-[85%]
+      object-contain
+      rounded-2xl
+      shadow-2xl
+    "
+  />
+</AnimatePresence>
+
+
 
         {/* Countdown */}
         <div className="absolute bottom-8 z-20 text-center text-white">
