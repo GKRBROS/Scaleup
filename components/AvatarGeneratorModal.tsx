@@ -13,12 +13,6 @@ import {
   Loader2,
   X,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-hot-toast";
 
@@ -67,77 +61,16 @@ const generationOptions: {
   },
 ];
 
-const companies = [
-  "Startups",
-  "Working Professionals",
-  "Students",
-  "Business Owners",
-  "NRI / Gulf Retunees",
-  "Government Officials",
+const loadingMessages = [
+  "It takes about 0.2 liters of water to cool the system for this generation",
+  "AI image generation uses approximately 20 megajoules of energy per image",
+  "AI models process millions of calculations per second to create your avatar",
+  "Your avatar is being crafted using advanced neural networks",
+  "Did you know? AI can recognize over 10,000 different facial features",
+  "We're analyzing lighting, shadows, and textures to perfect your image",
+  "Machine learning algorithms are working their magic on your photo",
+  "Creating the perfect blend of realism and artistic style",
 ];
-
-function TypeCard({
-  active,
-  title,
-  subtitle,
-  icon: Icon,
-  onClick,
-  testId,
-}: {
-  active: boolean;
-  title: string;
-  subtitle: string;
-  icon: any;
-  onClick: () => void;
-  testId: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      data-testid={testId}
-      className={cn(
-        "relative flex flex-col items-center justify-center border-[1.5px] transition-all duration-300",
-        "w-[100px] h-[70px] rounded-xl p-2",
-        "lg:w-[182px] lg:h-[98px] lg:p-0",
-        active
-          ? "bg-black text-white border-black scale-[1.02] lg:scale-100"
-          : "bg-white text-[#5E5E5E] border-[#E5E5E5] hover:border-gray-300 lg:hover:shadow-md",
-      )}
-    >
-      <Icon
-        className={cn(
-          "w-4 h-4 mb-1",
-          "lg:absolute lg:top-4 lg:w-6 lg:h-6 lg:mb-0",
-          active ? "brightness-0 invert" : "opacity-40",
-        )}
-      />
-      <div
-        className={cn(
-          "text-[9px] font-bold",
-          "lg:text-base lg:font-normal lg:mt-8 lg:mb-2",
-        )}
-        style={{
-          fontFamily:
-            window.innerWidth >= 1024
-              ? "Cal Sans, sans-serif"
-              : "Geist, sans-serif",
-        }}
-      >
-        {title}
-      </div>
-      <div
-        className={cn(
-          "hidden lg:block text-xs px-2",
-          active ? "opacity-100" : "opacity-60",
-        )}
-        style={{ fontFamily: "Cal Sans, sans-serif" }}
-      >
-        {subtitle}
-      </div>
-    </button>
-  );
-}
 
 const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   isOpen,
@@ -152,8 +85,9 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string>("");
   const [generatedUserId, setGeneratedUserId] = useState<string>("");
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+  const [countdown, setCountdown] = useState(90);
 
-  // Form data with initial values from registration
   const [formData, setFormData] = useState({
     name: registrationData?.name || "",
     email: registrationData?.email || "",
@@ -163,7 +97,6 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     organization: registrationData?.organization || "",
   });
 
-  // Update form data when registration data changes
   useEffect(() => {
     if (registrationData) {
       setFormData({
@@ -179,21 +112,18 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
   const activeOption = useMemo(
     () => generationOptions.find((o) => o.id === previewType)!,
-    [previewType],
+    [previewType]
   );
 
-  // Auto-cycle preview images on desktop every 4 seconds
+  // Auto-cycle preview images
   useEffect(() => {
     if (!isOpen || isGenerated) return;
-
     const isDesktop = window.innerWidth >= 1024;
     if (!isDesktop) return;
 
     const interval = setInterval(() => {
       setPreviewType((prev) => {
-        const currentIndex = generationOptions.findIndex(
-          (opt) => opt.id === prev,
-        );
+        const currentIndex = generationOptions.findIndex((opt) => opt.id === prev);
         const nextIndex = (currentIndex + 1) % generationOptions.length;
         return generationOptions[nextIndex].id;
       });
@@ -202,27 +132,48 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     return () => clearInterval(interval);
   }, [isOpen, isGenerated]);
 
+  // Rotate loading messages
+  useEffect(() => {
+    if (!isGenerating) return;
+    const interval = setInterval(() => {
+      setCurrentMessageIndex((prev) => (prev + 1) % loadingMessages.length);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [isGenerating]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (!isGenerating) {
+      setCountdown(90);
+      return;
+    }
+    const interval = setInterval(() => {
+      setCountdown((prev) => (prev <= 0 ? 0 : prev - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isGenerating]);
+
+  const formattedCountdown = useMemo(() => {
+    const minutes = Math.floor(countdown / 60);
+    const seconds = countdown % 60;
+    return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  }, [countdown]);
+
   useEffect(() => {
     if (!generatedImageUrl || !formData.phone_no) return;
     if (typeof window === "undefined") return;
-
     try {
       localStorage.setItem(
         `scaleup2026:final_image_url:${formData.phone_no}`,
-        generatedImageUrl,
+        generatedImageUrl
       );
     } catch (error) {
       console.error("Failed to store generated image URL:", error);
     }
   }, [generatedImageUrl, formData.phone_no]);
 
-  // Map generationType to prompt_type
   const getPromptType = (type: GenerationType): string => {
-    const mapping = {
-      superhero: "prompt1",
-      professional: "prompt2",
-      medieval: "prompt3",
-    };
+    const mapping = { superhero: "prompt1", professional: "prompt2", medieval: "prompt3" };
     return mapping[type];
   };
 
@@ -248,9 +199,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     }
   };
 
-  const handleFormChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => {
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -286,51 +235,36 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     return "";
   };
 
-  const handleSendMail = async (finalImageUrl:any) => {  
-      try {
-        const res = await fetch("/api/send-mail", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            to: formData.email, // for testing purposes
-            subject: "ScaleUp",
-            // message: "Email triggered from footer button click",
-            finalImageUrl: finalImageUrl || "No image URL found",
-          }),
-        });
-  
-  
-        const data = await res.json();
-  
-        if (data.success) {
-          alert("Mail sent successfully ✅");
-        } else {
-          alert("Failed to send mail ❌");
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Something went wrong");
-      } finally {
+  const handleSendMail = async (finalImageUrl: any) => {
+    try {
+      const res = await fetch("/api/send-mail", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: formData.email,
+          subject: "ScaleUp Conclave 2026 - Your AI Avatar",
+          finalImageUrl: finalImageUrl || "No image URL found",
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        console.log("Mail sent successfully ✅");
+      } else {
+        console.error("Failed to send mail ❌");
       }
-    };
+    } catch (err) {
+      console.error("Error sending mail:", err);
+    }
+  };
 
   const handleGenerate = async () => {
-    // Validation
     if (!photoFile) {
       toast.error("Please upload a photo");
       return;
     }
 
-    if (
-      !formData.name ||
-      !formData.email ||
-      !formData.phone_no ||
-      !formData.district ||
-      !formData.category ||
-      !formData.organization
-    ) {
+    if (!formData.name || !formData.email || !formData.phone_no || !formData.district || !formData.category || !formData.organization) {
       toast.error("Please fill all required fields");
       return;
     }
@@ -343,49 +277,19 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
       for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
         try {
-          const response = await fetch(
-            `https://scaleup.frameforge.one/scaleup2026/user/${userId}`,
-          );
+          const response = await fetch(`https://scaleup.frameforge.one/scaleup2026/user/${userId}`);
 
           let result;
           try {
             const text = await response.text();
-            console.log(`Polling attempt ${attempt + 1} raw response:`, text);
             result = text ? JSON.parse(text) : {};
           } catch (parseError) {
-            console.error(
-              `Polling attempt ${attempt + 1} - Failed to parse JSON:`,
-              parseError,
-            );
-            continue; // Skip to next attempt
+            continue;
           }
 
-          console.log(`Polling attempt ${attempt + 1}:`, {
-            status: response.status,
-            result,
-            hasFinalImageUrl: !!result.final_image_url,
-            finalImageUrlValue: result.final_image_url,
-            allKeys: Object.keys(result),
-          });
-
-          if (response.ok && result.final_image_url) {
-            console.log("Image URL found:", result.final_image_url);
-            return result.final_image_url as string;
-          }
-
-          // Check alternative field names
-          if (response.ok && result.generated_image_url) {
-            console.log(
-              "Image URL found (generated_image_url):",
-              result.generated_image_url,
-            );
-            return result.generated_image_url as string;
-          }
-
-          if (response.ok && result.image_url) {
-            console.log("Image URL found (image_url):", result.image_url);
-            return result.image_url as string;
-          }
+          if (response.ok && result.final_image_url) return result.final_image_url as string;
+          if (response.ok && result.generated_image_url) return result.generated_image_url as string;
+          if (response.ok && result.image_url) return result.image_url as string;
         } catch (error) {
           console.error("Error polling generated image:", error);
         }
@@ -393,76 +297,10 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
 
-      console.error("Max polling attempts reached without finding image");
-      return "";
-    };
-
-    const fetchGeneratedImageUrlByPhone = async (phoneNo: string) => {
-      const maxAttempts = 30;
-      const delayMs = 2000;
-
-      for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-        try {
-          const response = await fetch(
-            `https://scaleup.frameforge.one/scaleup2026/user/${encodeURIComponent(phoneNo)}`,
-          );
-
-          let result;
-          try {
-            const text = await response.text();
-            console.log(
-              `Polling by phone attempt ${attempt + 1} raw response:`,
-              text,
-            );
-            result = text ? JSON.parse(text) : {};
-          } catch (parseError) {
-            console.error(
-              `Polling by phone attempt ${attempt + 1} - Failed to parse JSON:`,
-              parseError,
-            );
-            continue;
-          }
-
-          console.log(`Polling by phone attempt ${attempt + 1}:`, {
-            status: response.status,
-            result,
-            hasFinalImageUrl: !!result.final_image_url,
-            finalImageUrlValue: result.final_image_url,
-            allKeys: Object.keys(result),
-          });
-
-          if (response.ok && result.final_image_url) {
-            console.log("Image URL found:", result.final_image_url);
-            return result.final_image_url as string;
-          }
-
-          if (response.ok && result.generated_image_url) {
-            console.log(
-              "Image URL found (generated_image_url):",
-              result.generated_image_url,
-            );
-            return result.generated_image_url as string;
-          }
-
-          if (response.ok && result.image_url) {
-            console.log("Image URL found (image_url):", result.image_url);
-            return result.image_url as string;
-          }
-        } catch (error) {
-          console.error("Error polling generated image by phone:", error);
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, delayMs));
-      }
-
-      console.error(
-        "Max polling attempts reached without finding image (phone lookup)",
-      );
       return "";
     };
 
     try {
-      // Create FormData for API
       const apiFormData = new FormData();
       apiFormData.append("name", formData.name);
       apiFormData.append("email", formData.email);
@@ -473,182 +311,73 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       apiFormData.append("prompt_type", getPromptType(generationType));
       apiFormData.append("photo", photoFile);
 
-      // Call API
-      const response = await fetch("https://scaleup.frameforge.one/scaleup2026/generate", {
-        method: "POST",
-        body: apiFormData,
-      });
+      console.log("Sending request to generate API...");
+      console.log("Generation type:", generationType);
+      console.log("Prompt type:", getPromptType(generationType));
+
+      let response;
+      try {
+        response = await fetch("https://scaleup.frameforge.one/scaleup2026/generate", {
+          method: "POST",
+          body: apiFormData,
+        });
+      } catch (fetchError) {
+        console.error("Network error:", fetchError);
+        toast.error("Network error. Please check your connection and try again.");
+        setIsGenerating(false);
+        return;
+      }
+
+      console.log("API Response status:", response.status);
+
+      if (!response.ok) {
+        console.error("API returned error status:", response.status);
+        toast.error(`Server error (${response.status}). Please try again.`);
+        setIsGenerating(false);
+        return;
+      }
 
       let result;
       try {
         const text = await response.text();
-        console.log("Raw response:", text);
+        console.log("API Response text:", text);
         result = text ? JSON.parse(text) : {};
+        console.log("Parsed result:", result);
       } catch (parseError) {
-        console.error("Failed to parse response:", parseError);
+        console.error("JSON parse error:", parseError);
         toast.error("Server returned invalid response. Please try again.");
         setIsGenerating(false);
         return;
       }
 
-      console.log("Generate API Response:", {
-        status: response.status,
-        data: result,
-      });
-
-      const isBackendProcessing =
-        response.status === 202 ||
-        result?.error === "Backend processing" ||
-        result?.status === 504;
-
-      if (isBackendProcessing) {
-        toast(
-          "Image generation started. Please wait a moment and try again to view the result.",
-        );
-        setIsGenerating(false);
-        return;
-      }
-
-      // Always store user_id when available
       if (result?.user_id) {
         setGeneratedUserId(result.user_id);
       }
 
       const finalImageUrl = extractFinalImageUrl(result);
-        handleSendMail(finalImageUrl)
 
-      // Handle 202 Accepted (async processing) - immediately start polling
-      if (response.status === 202 && result?.user_id) {
-        console.log(
-          "Backend is processing asynchronously (202), starting to poll...",
-        );
-        const imageUrl = await fetchGeneratedImageUrl(result.user_id);
-        if (imageUrl) {
-          setGeneratedImageUrl(imageUrl);
-          setIsGenerated(true);
-          setIsGenerating(false);
-          return;
-        }
-        // If polling failed, show message
-        toast("Image generation in progress. Please try again in a moment.");
-        setIsGenerating(false);
-        return;
-      }
-
-      if (response.status === 202 && formData.phone_no) {
-        console.log(
-          "Backend is processing asynchronously (202), polling by phone...",
-        );
-        const imageUrl = await fetchGeneratedImageUrlByPhone(formData.phone_no);
-        if (imageUrl) {
-          setGeneratedImageUrl(imageUrl);
-          setIsGenerated(true);
-          setIsGenerating(false);
-          return;
-        }
-        toast("Image generation in progress. Please try again in a moment.");
-        setIsGenerating(false);
-        return;
-      }
-
-      // Check if response is not ok (4xx, 5xx errors)
-      if (!response.ok) {
-        // Even with error, try to get image if user_id exists
-        if (result?.user_id) {
-          console.log(
-            "Response not OK but user_id exists, polling for image...",
-          );
-          setGeneratedUserId(result.user_id);
-          const imageUrl = await fetchGeneratedImageUrl(result.user_id);
-          if (imageUrl) {
-            setGeneratedImageUrl(imageUrl);
-            setIsGenerated(true);
-            setIsGenerating(false);
-            return;
-          }
-        }
-
-        if (formData.phone_no) {
-          console.log(
-            "Response not OK, polling for image by phone_no...",
-            formData.phone_no,
-          );
-          const imageUrl = await fetchGeneratedImageUrlByPhone(
-            formData.phone_no,
-          );
-          if (imageUrl) {
-            setGeneratedImageUrl(imageUrl);
-            setIsGenerated(true);
-            setIsGenerating(false);
-            return;
-          }
-        }
-
-        const errorMsg =
-          result?.details || result?.error || "Failed to generate avatar";
-        console.error("Generate API Error:", errorMsg);
-
-        // For 504 timeout, suggest retry
-        if (response.status === 504) {
-          toast.error(`${errorMsg}. Please wait a moment and try again.`);
-        } else {
-          toast.error(`Error: ${errorMsg}`);
-        }
-
-        setIsGenerating(false);
-        return;
-      }
-
-      // Success - check various response formats
-      // Backend might return: { success: true, final_image_url, user_id } OR { final_image_url, user_id }
       if (finalImageUrl) {
-        console.log("Setting generated image URL:", finalImageUrl);
         setGeneratedImageUrl(finalImageUrl);
         setIsGenerated(true);
         setIsGenerating(false);
+        handleSendMail(finalImageUrl);
         return;
       }
 
       if (result.user_id) {
-        console.log("Polling for image with user_id:", result.user_id);
         const imageUrl = await fetchGeneratedImageUrl(result.user_id);
         if (imageUrl) {
-          console.log("Image URL received from polling:", imageUrl);
           setGeneratedImageUrl(imageUrl);
           setIsGenerated(true);
+          handleSendMail(imageUrl);
         } else {
-          toast(
-            "Image generation is taking longer than expected. Please try again.",
-          );
+          toast("Image generation is taking longer than expected. Please try again.");
         }
         setIsGenerating(false);
         return;
       }
 
-      if (formData.phone_no) {
-        console.log("Polling for image with phone_no:", formData.phone_no);
-        const imageUrl = await fetchGeneratedImageUrlByPhone(formData.phone_no);
-        if (imageUrl) {
-          console.log("Image URL received from phone polling:", imageUrl);
-          setGeneratedImageUrl(imageUrl);
-          setIsGenerated(true);
-        } else {
-          toast(
-            "Image generation is taking longer than expected. Please try again.",
-          );
-        }
-        setIsGenerating(false);
-        return;
-      }
-
-      // If we get here, success response but no useful data
-      console.error(
-        "Success response but missing image URL and user_id:",
-        result,
-      );
-      toast.error(
-        "Image generation completed but image URL is missing. Please contact support.",
-      );
+      toast.error("Image generation failed. Please try again.");
       setIsGenerating(false);
     } catch (error) {
       console.error("Error generating avatar:", error);
@@ -662,9 +391,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
     if (!imageUrl && generatedUserId) {
       try {
-        const response = await fetch(
-          `https://scaleup.frameforge.one/scaleup2026/user/${generatedUserId}`,
-        );
+        const response = await fetch(`https://scaleup.frameforge.one/scaleup2026/user/${generatedUserId}`);
         const text = await response.text();
         const result = text ? JSON.parse(text) : {};
         const fetchedUrl = extractFinalImageUrl(result);
@@ -674,23 +401,6 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         }
       } catch (error) {
         console.error("Error fetching generated image:", error);
-      }
-    }
-
-    if (!imageUrl && formData.phone_no) {
-      try {
-        const response = await fetch(
-          `https://scaleup.frameforge.one/scaleup2026/user/${encodeURIComponent(formData.phone_no)}`,
-        );
-        const text = await response.text();
-        const result = text ? JSON.parse(text) : {};
-        const fetchedUrl = extractFinalImageUrl(result);
-        if (response.ok && fetchedUrl) {
-          imageUrl = fetchedUrl;
-          setGeneratedImageUrl(fetchedUrl);
-        }
-      } catch (error) {
-        console.error("Error fetching generated image by phone:", error);
       }
     }
 
@@ -715,7 +425,6 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   };
 
   const handleClose = () => {
-    // Reset state
     setPreviewType("superhero");
     setGenerationType("superhero");
     setIsGenerating(false);
@@ -735,330 +444,231 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center modal-overlay"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
           onClick={handleClose}
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-7xl h-[92vh] lg:h-[85vh] mx-4 rounded-3xl bg-white shadow-[var(--shadow-lg)] overflow-hidden"
+            className="relative w-full max-w-5xl max-h-[95vh] bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col lg:flex-row"
           >
             {/* Close Button */}
-            <button
+            {/* <button
               onClick={handleClose}
-              className="absolute top-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 transition hover:bg-zinc-200"
-              aria-label="Close modal"
+              className="absolute top-6 right-6 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition"
             >
-              <X className="h-5 w-5 text-zinc-900" />
-            </button>
+              <X className="h-5 w-5 text-gray-900" />
+            </button> */}
 
-            {/* Scrollable Content */}
-            <div className="h-full overflow-y-auto scrollbar-hide bg-white text-zinc-950">
-              <div className="min-h-full px-4 py-8 sm:px-6 lg:px-8">
-                <div className="mx-auto w-full max-w-6xl">
-                  <div
-                    className={cn(
-                      "grid items-start gap-8 transition-all duration-500",
-                      isGenerated
-                        ? "lg:grid-cols-1"
-                        : "lg:grid-cols-[220px_1fr_500px]",
-                    )}
-                  >
-                    {/* Left Sidebar - Options */}
-                    <AnimatePresence>
-                      {!isGenerated && (
-                        <motion.aside
-                          initial={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -20 }}
-                          className="order-1 lg:order-none"
-                        >
-                          <div className="grid grid-cols-3 gap-3 lg:grid-cols-1 lg:gap-[18px] lg:w-[218px] lg:bg-[#F9FAFB] lg:border lg:border-[rgba(152,152,152,0.5)] lg:rounded-xl lg:p-[18px]">
-                            {generationOptions.map((opt) => (
-                              <TypeCard
-                                key={opt.id}
-                                active={previewType === opt.id}
-                                title={opt.title}
-                                subtitle={opt.subtitle}
-                                icon={opt.icon}
-                                onClick={() => setPreviewType(opt.id)}
-                                testId={`button-generation-${opt.id}`}
-                              />
-                            ))}
-                          </div>
-                        </motion.aside>
-                      )}
-                    </AnimatePresence>
-
-                    {/* Center - Preview/Result */}
-                    <section
-                      className={cn(
-                        "order-2 flex h-full items-start",
-                        isGenerated && "mx-auto w-full max-w-2xl",
-                      )}
+            {/* LEFT SIDE - Form */}
+            <div className="w-full lg:w-1/2 p-6 sm:p-8 lg:p-12 overflow-y-auto bg-white">
+              <AnimatePresence mode="wait">
+                {!isGenerated ? (
+                  <motion.div key="form" initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <h1
+                      className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2 "
+                      style={{ fontFamily: 'Calsans, sans-serif' }}
                     >
-                      <div className="mx-auto w-full max-w-[380px] md:max-w-[400px] lg:max-w-none lg:self-stretch">
-                        <div
-                          data-testid="img-poster-preview"
-                          className={cn(
-                            "relative mx-auto aspect-[3/4] w-full overflow-hidden rounded-3xl border border-zinc-200 bg-zinc-50 lg:aspect-auto lg:border-0",
-                            isGenerated
-                              ? "lg:h-[70vh] lg:max-h-[70vh] lg:w-auto"
-                              : "lg:h-auto",
-                          )}
-                        >
-                          <AnimatePresence mode="wait">
-                            <motion.img
-                              key={isGenerated ? "generated" : previewType}
-                              initial={{ opacity: 0, scale: 0.95 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0, scale: 1.05 }}
-                              transition={{ duration: 0.4 }}
-                              src={
-                                isGenerated
-                                  ? generatedImageUrl
-                                  : activeOption.previewImg
-                              }
-                              alt="Avatar preview"
-                              className="h-full w-full object-cover lg:object-contain"
-                              onError={(e) => {
-                                console.error(
-                                  "Image failed to load:",
-                                  generatedImageUrl,
-                                );
-                                e.currentTarget.src = activeOption.previewImg;
-                              }}
-                              onLoad={() =>
-                                console.log(
-                                  "Image loaded successfully:",
-                                  isGenerated
-                                    ? generatedImageUrl
-                                    : activeOption.previewImg,
-                                )
-                              }
-                            />
-                          </AnimatePresence>
+                      Generate your avatar
+                    </h1>
+                    <p className="text-sm text-gray-500 mb-6">
+                      To generate your avatar, upload a clear, well-lit, front-facing photo without filters. We only do one generation, and it can take about a minute.
+                    </p>
 
-                          {/* AI Loading Overlay */}
-                          <AnimatePresence>
-                            {isGenerating && (
-                              <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm"
-                              >
-                                <motion.div
-                                  animate={{
-                                    rotate: 360,
-                                    scale: [1, 1.1, 1],
-                                  }}
-                                  transition={{
-                                    rotate: {
-                                      duration: 2,
-                                      repeat: Infinity,
-                                      ease: "linear",
-                                    },
-                                    scale: { duration: 2, repeat: Infinity },
-                                  }}
-                                >
-                                  <Sparkles className="h-12 w-12 text-white" />
-                                </motion.div>
-                                <motion.div
-                                  initial={{ opacity: 0, y: 10 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  className="mt-4 text-lg font-bold text-white"
-                                >
-                                  AI is crafting your avatar...
-                                </motion.div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-
-                        {/* Action Buttons for Generated Image */}
-                        <AnimatePresence>
-                          {isGenerated && (
-                            <motion.div
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              className="mt-8 flex items-center justify-center gap-4"
-                            >
-                              <button
-                                onClick={handleDownload}
-                                data-testid="button-download"
-                                className="flex items-center gap-2 rounded-2xl bg-zinc-900 px-8 py-3 font-semibold text-white transition hover:bg-zinc-800"
-                              >
-                                <Download className="h-4 w-4" />
-                                Download
-                              </button>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+                          Enter your name
+                        </label>
+                        <input
+                          name="name"
+                          value={formData.name}
+                          onChange={handleFormChange}
+                          placeholder="Enter your name"
+                          className="w-full h-11 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition"
+                        />
                       </div>
-                    </section>
 
-                    {/* Right - Form */}
-                    <AnimatePresence>
-                      {!isGenerated && (
-                        <motion.main
-                          initial={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: 20 }}
-                          className="order-3"
-                        >
-                          <div className="max-w-xl">
-                            <h1
-                              data-testid="text-title"
-                              className="text-4xl font-extrabold tracking-tight text-zinc-950 sm:text-5xl"
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+                          Company Name
+                        </label>
+                        <input
+                          name="organization"
+                          value={formData.organization}
+                          onChange={handleFormChange}
+                          placeholder="Company Name"
+                          className="w-full h-11 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+                          Choose Type of generation
+                        </label>
+                        <div className="flex gap-2">
+                          {generationOptions.map((opt) => (
+                            <button
+                              key={opt.id}
+                              onClick={() => setGenerationType(opt.id)}
+                              className={cn(
+                                "flex-1 h-11 px-3 rounded-lg text-sm font-semibold transition border",
+                                generationType === opt.id
+                                  ? "bg-black text-white border-black"
+                                  : "bg-white text-gray-900 border-gray-300 hover:border-gray-400"
+                              )}
                             >
-                              Generate your avatar
-                            </h1>
-                            <p
-                              data-testid="text-description"
-                              className="mt-3 max-w-prose text-sm leading-relaxed text-zinc-500 sm:text-base"
-                            >
-                              To generate your avatar, upload a clear, well-lit,
-                              front-facing photo without filters. We only do one
-                              generation, and it can take about a minute.
-                            </p>
+                              {opt.title === "Medieval Warrior" ? "Warrior" : opt.title}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
 
-                            <div className="mt-7 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                              <div>
-                                <label
-                                  data-testid="label-name"
-                                  className="text-sm font-semibold text-zinc-800"
-                                  htmlFor="name"
-                                >
-                                  Your Name
-                                </label>
-                                <input
-                                  id="name"
-                                  data-testid="input-name"
-                                  name="name"
-                                  placeholder="Michael"
-                                  value={formData.name}
-                                  onChange={handleFormChange}
-                                  className="mt-2 h-[66px] w-full rounded-[16.5px] border border-[#E5E5E5] bg-white px-[16.5px] text-[20.625px] font-semibold tracking-[-0.04em] text-zinc-900 outline-none transition focus:ring-2 focus:ring-black placeholder:text-[#A1A1A1]"
-                                  style={{ fontFamily: "Geist, sans-serif" }}
-                                />
-                              </div>
-                              <div>
-                                <label
-                                  data-testid="label-company"
-                                  className="text-sm font-semibold text-zinc-800"
-                                  htmlFor="organization"
-                                >
-                                  Organization Name
-                                </label>
-                                <input
-                                  id="organization"
-                                  data-testid="input-organization"
-                                  name="organization"
-                                  placeholder="Enter organization"
-                                  value={formData.organization}
-                                  onChange={handleFormChange}
-                                  className="mt-2 h-[66px] w-full rounded-[16.5px] border border-[#E5E5E5] bg-white px-[16.5px] text-[20.625px] font-semibold tracking-[-0.04em] text-zinc-900 outline-none transition focus:ring-2 focus:ring-black placeholder:text-[#A1A1A1]"
-                                  style={{ fontFamily: "Geist, sans-serif" }}
-                                />
-                              </div>
-                            </div>
-
-                            <div className="mt-6">
-                              <div
-                                data-testid="text-type-of-generation"
-                                className="text-sm font-semibold text-zinc-800"
-                              >
-                                Type Of Generation
-                              </div>
-                              <div className="mt-3 grid grid-cols-3 md:grid-cols-1 lg:grid-cols-3 gap-3">
-                                {generationOptions.map((opt) => (
-                                  <button
-                                    key={opt.id}
-                                    type="button"
-                                    data-testid={`button-type-${opt.id}`}
-                                    onClick={() => setGenerationType(opt.id)}
-                                    className={cn(
-                                      "h-[66px] rounded-[16.5px] border px-2 text-sm font-semibold transition",
-                                      "lg:px-4 lg:text-[20.625px]",
-                                      generationType === opt.id
-                                        ? "bg-black text-white border-black"
-                                        : "bg-white text-black border-[#E5E5E5]",
-                                    )}
-                                  >
-                                    {opt.title === "Professional"
-                                      ? "Professional Suit"
-                                      : opt.title}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-
-                            <div className="mt-6">
-                              <div
-                                data-testid="text-optional"
-                                className="text-xs font-semibold uppercase tracking-wide text-zinc-400"
-                              >
-                                Optional
-                              </div>
-
-                              <div className="mt-3">
-                                <div
-                                  data-testid="label-upload"
-                                  className="text-sm font-semibold text-zinc-800"
-                                >
-                                  Upload image{" "}
-                                  <span className="text-red-500">*</span>
-                                </div>
-                                <input
-                                  type="file"
-                                  id="photo-upload"
-                                  data-testid="input-photo-upload"
-                                  onChange={handleFileChange}
-                                  accept="image/jpeg,image/png"
-                                  className="mt-2 h-44 w-full rounded-[32px] border-2 border-dashed border-gray-100 bg-[#F9FAFB] p-4 cursor-pointer transition hover:border-gray-300"
-                                />
-                                <div
-                                  data-testid="text-upload-hint"
-                                  className="mt-2 text-xs text-zinc-500"
-                                >
-                                  Upload a clear, well-lit photo (JPEG or PNG).
-                                  Max size: 2MB
-                                </div>
-                              </div>
-                            </div>
-
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+                          Upload Photo
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="file"
+                            id="file-upload"
+                            onChange={handleFileChange}
+                            accept="image/jpeg,image/png"
+                            className="hidden"
+                          />
+                          <label
+                            htmlFor="file-upload"
+                            className="flex items-center justify-between w-full h-11 px-4 rounded-lg border border-gray-300 cursor-pointer hover:border-gray-400 transition bg-white"
+                          >
+                            <span className="text-sm text-gray-500">
+                              {photoFile ? photoFile.name : "Select Image File"}
+                            </span>
                             <button
                               type="button"
-                              onClick={handleGenerate}
-                              disabled={isGenerating}
-                              data-testid="button-send-message"
-                              className="relative mt-6 flex h-12 w-full items-center justify-center overflow-hidden rounded-2xl bg-zinc-900 text-sm font-semibold text-white shadow-[var(--shadow-sm)] transition hover:bg-zinc-800 active:bg-zinc-900 disabled:cursor-not-allowed disabled:opacity-70"
+                              className="bg-black text-white px-4 py-1.5 rounded-md text-sm font-semibold"
                             >
-                              {isGenerating ? (
-                                <Loader2 className="h-5 w-5 animate-spin" />
-                              ) : (
-                                "Send Message"
-                              )}
-                              {isGenerating && (
-                                <motion.div
-                                  className="absolute inset-0 bg-white/10"
-                                  initial={{ x: "-100%" }}
-                                  animate={{ x: "100%" }}
-                                  transition={{
-                                    repeat: Infinity,
-                                    duration: 1.5,
-                                    ease: "linear",
-                                  }}
-                                />
-                              )}
+                              Select File
                             </button>
-                          </div>
-                        </motion.main>
+                          </label>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={handleGenerate}
+                        disabled={isGenerating}
+                        className="w-full h-11 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                      >
+                        {isGenerating ? "Generating..." : "Submit"}
+                      </button>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div key="success" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                    <h1
+                      className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2 pt-2"
+                      style={{ fontFamily: 'Calsans, sans-serif' }}
+                    >
+                      Awesome your AI avatar has been generated
+                    </h1>
+                    <p className="text-sm text-gray-600 mb-6">
+                      Great news! Your AI Avatar has been sent to your email and WhatsApp. Feel free to share with your friends and on social networks.
+                    </p>
+                    <button
+                      onClick={handleDownload}
+                      className="w-full h-11 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download AI Avatar
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* RIGHT SIDE - Image Preview */}
+            <div className="hidden lg:flex lg:w-1/2 bg-gray-900 items-center justify-center p-6 lg:p-8 relative">
+              {/* Type Selection Tabs - Top */}
+              {!isGenerated && (
+                <div className="absolute top-4 left-4 right-4 flex gap-2 bg-white/10 backdrop-blur-sm rounded-xl p-1">
+                  {generationOptions.map((opt) => (
+                    <button
+                      key={opt.id}
+                      onClick={() => setPreviewType(opt.id)}
+                      className={cn(
+                        "flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5",
+                        previewType === opt.id ? "bg-white text-gray-900" : "text-white/70 hover:text-white"
                       )}
-                    </AnimatePresence>
-                  </div>
+                    >
+                      <opt.icon className="w-3.5 h-3.5" />
+                      {opt.title}
+                    </button>
+                  ))}
                 </div>
+              )}
+
+              {/* Main Content */}
+              <div className="w-full h-full flex items-center justify-center mt-16 lg:mt-0">
+                <AnimatePresence mode="wait">
+                  {isGenerating ? (
+                    <motion.div
+                      key="loading"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="text-center text-white"
+                    >
+                      <motion.div
+                        animate={{ rotate: 360, scale: [1, 1.2, 1] }}
+                        transition={{
+                          rotate: { duration: 2, repeat: Infinity, ease: "linear" },
+                          scale: { duration: 2, repeat: Infinity },
+                        }}
+                        className="mb-6"
+                      >
+                        <Sparkles className="h-16 w-16 mx-auto" />
+                      </motion.div>
+
+                      <AnimatePresence mode="wait">
+                        <motion.p
+                          key={currentMessageIndex}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          className="text-lg font-semibold mb-8 px-4"
+                        >
+                          {loadingMessages[currentMessageIndex]}
+                        </motion.p>
+                      </AnimatePresence>
+
+                      <div className="text-5xl font-mono font-bold">{formattedCountdown}</div>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key={isGenerated ? "result" : previewType}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      className="w-full max-w-md"
+                    >
+                      <img
+                        src={isGenerated ? generatedImageUrl : activeOption.previewImg}
+                        alt="Avatar preview"
+                        className="w-full h-auto rounded-2xl shadow-2xl"
+                        onError={(e) => {
+                          console.error("Image failed to load");
+                          e.currentTarget.src = activeOption.previewImg;
+                        }}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Bottom branding */}
+              <div className="absolute bottom-4 left-0 right-0 text-center text-white/60 text-xs">
+                Created using FrameForge.one
               </div>
             </div>
           </motion.div>
