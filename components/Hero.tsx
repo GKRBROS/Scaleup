@@ -50,7 +50,7 @@ function Hero() {
           </span>{" "}
           <span
             className="font-gilmer tracking-tight sm:text-[56.63px] md:text-[100px] lg:text-[150px] xl:text-[190px]"
-            // style={{ fontWeight: "700" }}
+          // style={{ fontWeight: "700" }}
           >
             Ai Summit
           </span>
@@ -62,7 +62,7 @@ function Hero() {
         className="w-full max-w-md md:max-w-full rounded-3xl md:rounded-4xl 
              p-6 md:p-10 relative flex justify-between 
              mt-0 md:-mt-[76px] leading-normal md:leading-relaxed"
-        style={{ backgroundColor: "#202020", color: "#FFFFFF" }}
+        style={{ backgroundImage: "url('/Rectangle.png')",backgroundSize: "cover", color: "#FFFFFF" }}
       >
         {/* Top Right Icon */}
         <div className="absolute top-6 right-6 md:hidden">

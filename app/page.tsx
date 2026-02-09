@@ -8,6 +8,7 @@ import Involved from "@/components/Involved";
 import Navbar from "@/components/Navbar";
 import { Whatsapp } from "@/components/whatsapp";
 import Marque from "@/components/Marque";
+import AboutSection from "@/components/AboutUs";
 
 export default function Home() {
   const [open, setOpen] = useState(false);
@@ -32,6 +33,7 @@ export default function Home() {
       <Marque />
       <Hero />
       <Date />
+      <AboutSection />
       <Banner />
       <Involved />
       <Footer />

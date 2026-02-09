@@ -3,6 +3,7 @@ module.exports = {
     extend: {
       fontFamily: {
         gilmer: ["Gilmer", "sans-serif"],
+        PlusJakartaSans: ["PlusJakartaSans", "sans-serif"],
       },
     },
   },
