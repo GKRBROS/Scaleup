@@ -99,6 +99,18 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
 
     return () => clearInterval(interval);
   }, [otpSent, timeLeft]);
+  useEffect(() => {
+  const openAiPop = () => {
+    setShowPhoneModal(true); // this opens the OTP / phone modal
+  };
+
+  window.addEventListener("open-aipop", openAiPop as EventListener);
+
+  return () => {
+    window.removeEventListener("open-aipop", openAiPop as EventListener);
+  };
+}, []);
+
 
   useEffect(() => {
     const handleRegistrationOpen = () => setIsExternalModalOpen(true);
