@@ -62,6 +62,12 @@ export function AiModalPop({
 
   const OTP_VERIFY_TTL_MS = 5 * 60 * 1000;
 
+  const getAbsoluteUrl = (url: string) => {
+    if (!url) return "";
+    if (url.startsWith("http") || url.startsWith("https")) return url;
+    return `https://scaleup.frameforge.one${url.startsWith("/") ? "" : "/"}${url}`;
+  };
+
   const getVerifiedAt = (email: string) => {
     if (!email || typeof window === "undefined") return 0;
     const raw = localStorage.getItem(
@@ -195,7 +201,8 @@ export function AiModalPop({
   };
 
   const handleShowExistingImage = (url: string) => {
-    setExistingImageUrl(url);
+    const absUrl = getAbsoluteUrl(url);
+    setExistingImageUrl(absUrl);
     setShowExistingImageModal(true);
     setShowPhoneModal(false);
     if (mail) {
@@ -312,10 +319,12 @@ export function AiModalPop({
 
       if (response.ok) {
         // Check if backend response contains generated_image_url (nested in user object)
-        const backendImageUrl =
+        const rawBackendImageUrl =
           responseData.user?.generated_image_url ||
           responseData.generated_image_url;
-        if (backendImageUrl) {
+        
+        if (rawBackendImageUrl) {
+          const backendImageUrl = getAbsoluteUrl(rawBackendImageUrl);
           // Store it in localStorage for future use
           if (typeof window !== "undefined") {
             localStorage.setItem(

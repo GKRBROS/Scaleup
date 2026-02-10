@@ -78,6 +78,12 @@ const loadingMessages = [
   "Finalizing your masterpiece...",
 ];
 
+const getAbsoluteUrl = (url: string) => {
+  if (!url) return "";
+  if (url.startsWith("http") || url.startsWith("https")) return url;
+  return `https://scaleup.frameforge.one${url.startsWith("/") ? "" : "/"}${url}`;
+};
+
 const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   isOpen,
   onClose,
@@ -324,9 +330,9 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
             continue;
           }
 
-          if (response.ok && result.final_image_url) return result.final_image_url as string;
-          if (response.ok && result.generated_image_url) return result.generated_image_url as string;
-          if (response.ok && result.image_url) return result.image_url as string;
+          if (response.ok && result.final_image_url) return getAbsoluteUrl(result.final_image_url as string);
+          if (response.ok && result.generated_image_url) return getAbsoluteUrl(result.generated_image_url as string);
+          if (response.ok && result.image_url) return getAbsoluteUrl(result.image_url as string);
         } catch (error) {
           console.error("Error polling generated image:", error);
         }
@@ -392,7 +398,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
       const finalImageUrl = extractFinalImageUrl(result);
       if (finalImageUrl) {
-        setGeneratedImageUrl(finalImageUrl);
+        setGeneratedImageUrl(getAbsoluteUrl(finalImageUrl));
         setIsGenerated(true);
         setIsGenerating(false);
         return;
@@ -430,8 +436,9 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         const fetchedUrl = extractFinalImageUrl(result);
 
         if (response.ok && fetchedUrl) {
-          imageUrl = fetchedUrl;
-          setGeneratedImageUrl(fetchedUrl);
+          const absUrl = getAbsoluteUrl(fetchedUrl);
+          imageUrl = absUrl;
+          setGeneratedImageUrl(absUrl);
         }
       } catch (error) {
         console.error("Error fetching generated image:", error);
