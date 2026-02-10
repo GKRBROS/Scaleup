@@ -99,6 +99,18 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
 
     return () => clearInterval(interval);
   }, [otpSent, timeLeft]);
+  
+  useEffect(() => {
+    const openAiPop = () => {
+      setShowPhoneModal(true); // this opens the OTP / phone modal
+    };
+
+    window.addEventListener("open-aipop", openAiPop as EventListener);
+
+    return () => {
+      window.removeEventListener("open-aipop", openAiPop as EventListener);
+    };
+  }, []);
 
   useEffect(() => {
     const handleRegistrationOpen = () => setIsExternalModalOpen(true);
@@ -409,52 +421,54 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
     <>
       <Toaster position="top-center" reverseOrder={false} />
 
-      {/* Phone & OTP Modal */}
+      {/* Phone & OTP Modal - Fully Responsive */}
       <Dialog open={showPhoneModal} onOpenChange={handleClosePhoneModal}>
-        <DialogContent className="w-[600px] h-[372px] p-0 overflow-hidden rounded-xl [&>button]:text-white ">
-        <VisuallyHidden>
-          <DialogTitle>Email Verification</DialogTitle>
-        </VisuallyHidden>
+        <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[600px] lg:w-[700px] max-w-[700px] h-auto max-h-[90vh] md:h-[372px] p-0 overflow-hidden rounded-xl [&>button]:text-white">
+          <VisuallyHidden>
+            <DialogTitle>Email Verification</DialogTitle>
+          </VisuallyHidden>
 
-          <div className="flex flex-col md:flex-row h-full">
+          <div className="flex flex-col-reverse md:flex-row h-full">
 
-            {/* LEFT SIDE - Forms */}
+            {/* LEFT SIDE - Forms - Responsive Padding */}
             <div
               className={`w-full md:w-1/2 ${
                 !otpSent ? "flex" : "grid"
-              } items-center overflow-y-auto bg-white p-4`}
+              } items-center overflow-y-auto bg-white p-4 sm:p-6 md:p-4`}
             >
 
               {!otpSent ? (
                 <>
-                  <div className="space-y-2">
-                    <label className="text-sm  font-medium text-gray-700">
+                  <div className="space-y-3 w-full">
+                    <p style={{ fontFamily: 'Calsans, sans-serif' }} className="text-xs sm:text-sm font-medium text-gray-700 block">
+                      Your email helps us verify your registration status and ensure a smooth experience.
+Once verified, we’ll direct you to the right step—whether it’s registration ,AI image generation or for downloading created assets
+                    </p>
+                    <label className="text-xs sm:text-sm font-medium text-gray-700 block">
                       Email Address
                     </label>
-                    <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="flex flex-col gap-2">
                       <input
                         type="email"
                         placeholder="Enter Email Address"
                         value={mail}
                         onChange={(e) => setMail(e.target.value)}
-                        className="w-full h-10 sm:flex-1 px-3 py-1 border-2 rounded-lg focus:ring-2 outline-none h-10"
+                        className="w-full px-3 py-2 sm:py-2.5 text-sm sm:text-base border-2 rounded-lg focus:ring-2 outline-none"
                       />
                     </div>
                     <button
                       onClick={handleSendMail}
                       disabled={loading}
-                      className="w-full px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full px-4 py-2 sm:py-2.5 text-sm sm:text-base rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {loading ? "Sending..." : "Get Code"}
                     </button>
                   </div>
-
-                  
                 </>
               ) : (
                 <>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
+                  <div className="space-y-3 w-full">
+                    <label className="text-xs sm:text-sm font-medium text-gray-700 block">
                       Enter OTP
                     </label>
                     <p className="text-xs text-gray-500">
@@ -468,19 +482,19 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
                         setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
                       }
                       maxLength={6}
-                      className="w-full px-3 py-2 border-2 border-indigo-500 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none text-center text-xl sm:text-2xl tracking-widest"
+                      className="w-full px-3 py-2 sm:py-3 border-2 border-indigo-500 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 outline-none text-center text-lg sm:text-xl md:text-2xl tracking-widest"
                     />
                   </div>
 
                   <button
                     onClick={handleVerifyOtp}
                     disabled={loading || otp.length !== 6}
-                    className="w-full px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-2 sm:py-2.5 text-sm sm:text-base rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? "Verifying..." : "Verify OTP"}
                   </button>
 
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs sm:text-sm">
                     <span className="text-gray-600">Didn't receive OTP?</span>
                     {timeLeft > 0 ? (
                       <span className="text-indigo-600 font-medium">
@@ -501,7 +515,7 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
                       resetForm();
                       setOtpSent(false);
                     }}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition"
+                    className="w-full px-4 py-2 sm:py-2.5 text-sm sm:text-base rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition"
                   >
                     Change Mail Address
                   </button>
@@ -510,8 +524,8 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
 
             </div>
 
-            {/* RIGHT SIDE - Images/GIF */}
-            <div className="hidden md:block md:w-1/2 relative bg-gray-900">
+            {/* RIGHT SIDE - Images/GIF - Shows at top on mobile, right side on md+ */}
+            <div className="block md:w-1/2 w-full h-40 sm:h-48 md:h-auto relative bg-gray-900">
               <div className="absolute inset-0 flex items-center justify-center p-0">
                 <img
                   src="/assets/images/reg1.png"
@@ -528,13 +542,13 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
         </DialogContent>
       </Dialog>
 
-      {/* Existing Image Modal */}
+      {/* Existing Image Modal - Fully Responsive */}
       <Dialog
         open={showExistingImageModal}
         onOpenChange={setShowExistingImageModal}
       >
         <DialogContent
-          className="fixed w-[95vw] max-w-2xl rounded-xl p-6 max-h-[90vh] overflow-y-auto"
+          className="fixed w-[95vw] sm:w-[90vw] md:w-[80vw] lg:w-[70vw] max-w-2xl rounded-xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
           style={{
             backgroundColor: "#fff",
             color: "var(--neutral-50)",
@@ -542,25 +556,25 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
         >
           <DialogClose asChild />
           <DialogHeader className="flex flex-col items-center text-center space-y-2">
-            <DialogTitle className="text-lg font-[700]">
+            <DialogTitle className="text-base sm:text-lg font-[700]">
               Your Generated Avatar
             </DialogTitle>
-            <p className="text-sm text-gray-600">
+            <p className="text-xs sm:text-sm text-gray-600">
               We found your previous AI avatar. You can download it below.
             </p>
           </DialogHeader>
 
-          <div className="mt-6 flex flex-col items-center gap-4">
-            <div className="w-full max-h-[60vh] overflow-hidden rounded-3xl border border-zinc-200 bg-zinc-50 flex items-center justify-center">
+          <div className="mt-4 sm:mt-6 flex flex-col items-center gap-3 sm:gap-4">
+            <div className="w-full max-h-[50vh] sm:max-h-[60vh] overflow-hidden rounded-2xl sm:rounded-3xl border border-zinc-200 bg-zinc-50 flex items-center justify-center">
               <img
                 src={existingImageUrl}
                 alt="Generated avatar"
-                className="w-full h-auto max-h-[60vh] object-contain"
+                className="w-full h-auto max-h-[50vh] sm:max-h-[60vh] object-contain"
               />
             </div>
             <button
               onClick={handleDownloadExistingImage}
-              className="flex items-center gap-2 rounded-2xl bg-zinc-900 px-8 py-3 font-semibold text-white transition hover:bg-zinc-800"
+              className="flex items-center gap-2 rounded-xl sm:rounded-2xl bg-zinc-900 px-6 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base font-semibold text-white transition hover:bg-zinc-800"
             >
               Download
             </button>
@@ -575,7 +589,7 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
         registrationData={avatarRegistrationData || undefined}
       />
 
-      {/* Floating Icon - Bottom Right - Sticky and Larger */}
+      {/* Floating Icon - Fully Responsive - Scales down on mobile */}
       {showFloatingIcon &&
         !showPhoneModal &&
         !showExistingImageModal &&
@@ -583,12 +597,15 @@ export function AiModalPop({ showFloatingIcon = true,showFloatingform = true }: 
         !isExternalModalOpen && (
           <button
             onClick={openPhoneModal}
-            className="fixed bottom-8 right-8 !z-99 w-40 h-40 rounded-full transition-all flex items-center justify-center hover:scale-110 transform duration-300 animate-bounce"
-            // className="fixed bottom-8 right-8 z-50 w-20 h-20 rounded-full bg-gradient-to-br from-purple-600 to-purple-700 text-white shadow-2xl hover:shadow-purple-500/50 hover:from-purple-700 hover:to-purple-800 transition-all flex items-center justify-center hover:scale-110 transform duration-300 animate-bounce"
+            className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8 !z-[99] w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 lg:w-40 lg:h-40 rounded-full transition-all flex items-center justify-center hover:scale-110 transform duration-300 animate-bounce"
             style={{ position: 'fixed' }}
             title="Generate AI Avatar"
           >
-            <img src="/AI.png" alt="AI" className="h-40 w-40" />
+            <img 
+              src="/AI.png" 
+              alt="AI" 
+              className="w-full h-full object-contain" 
+            />
           </button>
         )}
     </>
