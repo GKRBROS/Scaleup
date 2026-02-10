@@ -286,35 +286,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     return "";
   };
 
-  const handleSendMail = async (finalImageUrl:any) => {  
-      try {
-        const res = await fetch("/api/send-mail", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            to: formData.email, // for testing purposes
-            subject: "ScaleUp",
-            // message: "Email triggered from footer button click",
-            finalImageUrl: finalImageUrl || "No image URL found",
-          }),
-        });
-  
-  
-        const data = await res.json();
-  
-        if (data.success) {
-          alert("Mail sent successfully ✅");
-        } else {
-          alert("Failed to send mail ❌");
-        }
-      } catch (err) {
-        console.error(err);
-        alert("Something went wrong");
-      } finally {
-      }
-    };
+
 
   const handleGenerate = async () => {
     // Validation
@@ -515,7 +487,6 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       }
 
       const finalImageUrl = extractFinalImageUrl(result);
-        handleSendMail(finalImageUrl)
 
       // Handle 202 Accepted (async processing) - immediately start polling
       if (response.status === 202 && result?.user_id) {
