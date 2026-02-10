@@ -250,7 +250,7 @@ export function AiModalPop({
           }),
         });
 
-        const otpData = await otpRes.json();
+        const otpData = await otpRes.json().catch(() => ({}));
 
         if (otpRes.ok) {
           setOtpSent(true);
