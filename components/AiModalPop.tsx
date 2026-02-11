@@ -676,25 +676,40 @@ export function AiModalPop({
                   className="w-full h-auto max-h-[50vh] sm:max-h-[60vh] object-contain"
                   onLoad={() => console.log("Existing image loaded successfully")}
                   onError={(e) => {
-                    console.error("Existing image failed to load:", existingImageUrl);
-                    toast.error("Failed to load your preview. You can still try the download button.");
-                  }}
-                />
-              ) : (
-                <div className="flex flex-col items-center gap-2 p-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-                  <p className="text-sm text-gray-500">Preparing your avatar...</p>
-                </div>
-              )}
+                      console.error("Existing image failed to load via proxy:", existingImageUrl);
+                      // Fallback: Try loading directly if proxy fails
+                      const imgElement = e.currentTarget as HTMLImageElement;
+                      if (!imgElement.src.includes("proxy-image")) return; // Prevent infinite loop
+                      
+                      console.log("Attempting direct image load fallback...");
+                      imgElement.src = existingImageUrl;
+                    }}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center gap-2 p-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                    <p className="text-sm text-gray-500">Preparing your avatar...</p>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3 w-full justify-center">
+                <button
+                  onClick={handleDownloadExistingImage}
+                  disabled={!existingImageUrl}
+                  className="flex items-center justify-center gap-2 rounded-xl sm:rounded-2xl bg-zinc-900 px-6 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base font-semibold text-white transition hover:bg-zinc-800 disabled:opacity-50 min-w-[140px]"
+                >
+                  Download
+                </button>
+                <a
+                  href={existingImageUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 rounded-xl sm:rounded-2xl bg-zinc-100 px-6 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base font-semibold text-zinc-900 transition hover:bg-zinc-200 min-w-[140px]"
+                >
+                  View Direct
+                </a>
+              </div>
             </div>
-            <button
-              onClick={handleDownloadExistingImage}
-              disabled={!existingImageUrl}
-              className="flex items-center gap-2 rounded-xl sm:rounded-2xl bg-zinc-900 px-6 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base font-semibold text-white transition hover:bg-zinc-800 disabled:opacity-50"
-            >
-              Download
-            </button>
-          </div>
         </DialogContent>
       </Dialog>
 
