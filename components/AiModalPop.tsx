@@ -326,10 +326,10 @@ export function AiModalPop({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            email: mail,
-            phone_no: "0000000000",
-            otp,
-          }),
+        email: mail,
+        phone_no: "0000000000", // The backend only needs email for OTP lookup, but we keep this for compatibility
+        otp,
+      }),
         },
       );
 
@@ -374,15 +374,51 @@ export function AiModalPop({
   };
 
   const handleOpenAvatarGenerator = (userData?: any) => {
+    console.log("handleOpenAvatarGenerator called with userData:", userData);
     setShowPhoneModal(false);
-    setAvatarRegistrationData({
-      name: userData?.name || "",
-      email: mail,
-      phone_no: userData?.phone_no || userData?.phone || "",
-      district: userData?.district || "",
-      category: userData?.category || "",
-      organization: userData?.organization || "",
-    });
+    
+    // Try to recover missing fields from localStorage if they aren't in userData
+    let recoveredData = { ...userData };
+    if (typeof window !== "undefined" && mail) {
+      const storageKey = `scaleup2026:registration_data:${mail.toLowerCase().trim()}`;
+      const stored = localStorage.getItem(storageKey);
+      console.log("LocalStorage data for key", storageKey, ":", stored);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          
+          // Merge logic: API data takes precedence, but only if it's truthy
+          // This prevents empty strings from API overwriting truthy values from localStorage
+          const mergeFields = ['name', 'phone_no', 'district', 'category', 'organization'];
+          
+          recoveredData = { ...parsed };
+          
+          if (userData) {
+            Object.keys(userData).forEach(key => {
+              if (userData[key]) {
+                recoveredData[key] = userData[key];
+              }
+            });
+          }
+          
+          console.log("Final merged recoveredData:", recoveredData);
+        } catch (e) {
+          console.error("Error parsing stored registration data:", e);
+        }
+      }
+    }
+
+    const finalRegistrationData = {
+      name: recoveredData?.name || "",
+      email: mail.trim(),
+      phone_no: recoveredData?.phone_no || recoveredData?.phone || "",
+      district: recoveredData?.district || "",
+      category: recoveredData?.category || "",
+      organization: recoveredData?.organization || "",
+    };
+    
+    console.log("Setting avatarRegistrationData to:", finalRegistrationData);
+    setAvatarRegistrationData(finalRegistrationData);
     setIsAvatarModalOpen(true);
     setShouldOpenAvatarAfterOtp(false);
   };

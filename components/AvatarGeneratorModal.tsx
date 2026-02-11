@@ -131,14 +131,15 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   }, [isGenerating]);
 
   useEffect(() => {
-    if (registrationData) {
+    if (registrationData && isOpen) {
+      console.log("AvatarGeneratorModal: Received registrationData:", registrationData);
       setFormData({
-        name: registrationData.name,
-        email: registrationData.email,
+        name: registrationData.name || "",
+        email: registrationData.email || "",
         phone_no: registrationData.phone_no || "0000000000",
-        district: registrationData.district,
-        category: registrationData.category,
-        organization: registrationData.organization,
+        district: registrationData.district || "",
+        category: registrationData.category || "",
+        organization: registrationData.organization || "",
       });
     }
   }, [registrationData, isOpen]);
@@ -278,17 +279,43 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
 
   const handleGenerate = async () => {
+    console.log("handleGenerate called with formData:", formData);
+    console.log("Photo file present:", !!photoFile);
+
     if (!photoFile) {
       toast.error("Please upload a photo");
       return;
     }
 
-    if (!formData.name || !formData.email || !formData.district || !formData.category || !formData.organization) {
-      toast.error("Please fill all required fields");
+    if (!formData.name || !formData.email || !formData.organization) {
+      console.log("Validation failed details:", {
+        name: formData.name,
+        email: formData.email,
+        organization: formData.organization,
+        district: formData.district,
+        category: formData.category
+      });
+      
+      let missingFields = [];
+      if (!formData.name) missingFields.push("Name");
+      if (!formData.email) missingFields.push("Email");
+      if (!formData.organization) missingFields.push("Organization");
+      
+      if (missingFields.length > 0) {
+        toast.error(`Please fill the following required fields: ${missingFields.join(", ")}`);
+      } else {
+        // This case handles where the fields are present but empty/whitespace only
+        toast.error("Please fill all required fields: Name, Email, and Organization");
+      }
       return;
     }
 
     setIsGenerating(true);
+    console.log("isGenerating set to true");
+    
+    // Ensure generationType is valid, fallback to superhero if needed
+    const finalGenerationType = generationType || "superhero";
+    console.log("Using generation type:", finalGenerationType);
 
     const fetchGeneratedImageUrl = async (userId: string) => {
       const maxAttempts = 60; // Increase to 2 minutes
@@ -343,12 +370,12 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       apiFormData.append("district", formData.district);
       apiFormData.append("category", formData.category);
       apiFormData.append("organization", formData.organization);
-      apiFormData.append("prompt_type", getPromptType(generationType));
+      apiFormData.append("prompt_type", getPromptType(finalGenerationType));
       apiFormData.append("photo", photoFile);
 
       console.log("Sending request to generate API...");
-      console.log("Generation type:", generationType);
-      console.log("Prompt type:", getPromptType(generationType));
+      console.log("Generation type:", finalGenerationType);
+      console.log("Prompt type:", getPromptType(finalGenerationType));
 
       let response;
       try {
@@ -394,6 +421,25 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         setGeneratedImageUrl(getAbsoluteUrl(finalImageUrl));
         setIsGenerated(true);
         setIsGenerating(false);
+        
+        // After successful generation, update the DB with final image info if user_id is present
+        if (result.user_id || generatedUserId) {
+          const userId = result.user_id || generatedUserId;
+          console.log(`Updating DB for user ${userId} with generated image info...`);
+          try {
+            await fetch(`https://scaleup.frameforge.one/scaleup2026/user/${userId}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                generated_image_url: finalImageUrl,
+                photo_url: result.photo_url || "",
+                aws_key: result.aws_key || ""
+              })
+            });
+          } catch (updateError) {
+            console.error("Failed to update DB with final image info:", updateError);
+          }
+        }
         return;
       }
 
@@ -402,6 +448,22 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         if (imageUrl) {
           setGeneratedImageUrl(imageUrl);
           setIsGenerated(true);
+          
+          // Also update DB after polling success
+          console.log(`Updating DB after polling success for user ${result.user_id}...`);
+          try {
+            await fetch(`https://scaleup.frameforge.one/scaleup2026/user/${result.user_id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                generated_image_url: imageUrl,
+                // We might not have photo_url/aws_key here easily if not returned in polling, 
+                // but the backend usually updates these during generation anyway.
+              })
+            });
+          } catch (updateError) {
+            console.error("Failed to update DB after polling:", updateError);
+          }
         } else {
           toast("Image generation is taking longer than expected. Please try again.");
         }
@@ -571,6 +633,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
             {/* Close button - positioned differently for mobile */}
             {!isMobile && (
               <button
+                type="button"
                 onClick={handleClose}
                 className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition"
               >
@@ -580,6 +643,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
             {isMobile && (
               <button
+                type="button"
                 onClick={handleClose}
                 className="fixed top-4 right-4 z-50 p-2 rounded-full bg-gray-900 text-white shadow-lg hover:bg-gray-800 transition"
               >
@@ -647,14 +711,22 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                             {generationOptions.map((opt) => (
                               <button
                                 key={opt.id}
+                                type="button"
                                 onClick={() => setGenerationType(opt.id)}
                                 className={cn(
-                                  "flex-1 h-11 px-3 rounded-lg text-sm font-semibold transition border",
+                                  "flex-1 h-11 px-3 rounded-lg text-sm font-semibold transition border relative overflow-hidden",
                                   generationType === opt.id
                                     ? "bg-black text-white border-black"
                                     : "bg-white text-gray-900 border-gray-300 hover:border-gray-400"
                                 )}
                               >
+                                {generationType === opt.id && (
+                                  <motion.div
+                                    layoutId="selected-bg"
+                                    className="absolute inset-0 bg-black -z-10"
+                                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                  />
+                                )}
                                 {opt.title === "Medieval Warrior" ? "Warrior" : opt.title}
                               </button>
                             ))}
@@ -720,6 +792,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                       </p>
 
                       <button
+                        type="button"
                         onClick={handleDownload}
                         className="w-full h-11 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2"
                       >
@@ -748,12 +821,13 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                     {generationOptions.map((opt) => (
                       <button
                         key={opt.id}
+                        type="button"
                         onClick={() => setPreviewType(opt.id)}
                         className={cn(
                           "flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5",
                           previewType === opt.id
-                            ? "bg-white text-gray-900"
-                            : "text-white/70 hover:text-white"
+                            ? "bg-white text-gray-900 shadow-sm"
+                            : "text-white/70 hover:text-white hover:bg-white/5"
                         )}
                       >
                         <opt.icon className="w-3.5 h-3.5" />
@@ -833,13 +907,19 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                         alt="Avatar preview"
                         className="max-h-[75vh] max-w-full object-contain rounded-2xl shadow-2xl"
                         onError={(e) => {
+                          console.error("Image load failed for URL:", generatedImageUrl);
                           e.currentTarget.src = activeOption.previewImg;
+                          // If it's already generated but fails to load, maybe show a hint
+                          if (isGenerated) {
+                            toast.error("Failed to load generated avatar. Please try downloading it.");
+                          }
                         }}
                       />
 
                       {/* Mobile Download Button */}
                       {isGenerated && isMobile && (
                         <button
+                          type="button"
                           onClick={handleDownload}
                           className="mt-6 w-full max-w-xs h-11 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2"
                         >

@@ -6,6 +6,8 @@ export async function GET(req: NextRequest) {
   const filename = searchParams.get("filename") || "image.png";
   const disposition = searchParams.get("disposition") || "attachment";
 
+  console.log("Proxy request for URL:", url);
+
   if (!url) {
     return NextResponse.json({ error: "URL is required" }, { status: 400 });
   }

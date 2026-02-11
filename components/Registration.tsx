@@ -262,6 +262,22 @@ export default function RegistrationModal({
 
       // SUCCESS - Call backend registration API
       console.log("Registration successful, calling backend register API");
+      
+      // Store user data in localStorage for recovery in case of exit
+      if (typeof window !== "undefined") {
+        const userDataToStore = {
+          name: formData.name,
+          email: formData.email,
+          phone_no: `${formData.countryCode}${formData.phone}`,
+          district: formData.district,
+          category: formData.category,
+          organization: formData.organization,
+        };
+        const storageKey = `scaleup2026:registration_data:${formData.email.toLowerCase().trim()}`;
+        console.log("Storing registration data to localStorage with key:", storageKey);
+        localStorage.setItem(storageKey, JSON.stringify(userDataToStore));
+      }
+
       const registerPayload = {
         name: formData.name,
         email: formData.email,
@@ -331,116 +347,110 @@ export default function RegistrationModal({
     <>
       {/* Overlay with backdrop blur */}
       <div
-        className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
-        // onClick={onClose} // Removed to prevent closing on outside click
+        className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm overflow-y-auto flex items-start md:items-center justify-center"
       >
         {/* Modal Container - Full screen on mobile, split on desktop */}
-        <div className="fixed inset-0 flex items-center justify-center p-0 md:p-4">
-          <div
-            className="relative w-full h-full md:h-auto md:max-h-[90vh] md:max-w-6xl md:rounded-2xl overflow-hidden bg-white shadow-2xl flex flex-col md:flex-row"
-            onClick={(e) => e.stopPropagation()}
+        <div className="relative w-full min-h-full md:min-h-0 md:h-auto md:max-h-[90vh] md:max-w-6xl md:rounded-2xl overflow-hidden bg-white shadow-2xl flex flex-col md:flex-row m-0 md:m-4">
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 z-50 text-gray-600 hover:text-red-600 transition p-2 bg-white/80 rounded-full md:bg-transparent"
           >
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 z-50 text-gray-600 hover:text-red-600 transition"
-            >
-              <X size={26} />
-            </button>
+            <X size={26} />
+          </button>
 
-            {/* LEFT SIDE - Forms */}
-            <div className={`w-full overflow-y-auto bg-white ${step === "avatar" ? "" : "md:w-1/2"}`}>
+          {/* LEFT SIDE - Forms */}
+          <div className={`w-full overflow-y-auto bg-white flex-1 ${step === "avatar" ? "" : "md:w-1/2"}`}>
+            {step === "form" && (
+              <RegistrationForm
+                formData={formData}
+                handleChange={handleChange}
+                focusedField={focusedField}
+                setFocusedField={setFocusedField}
+                getBoxStyle={getBoxStyle}
+                handleSubmit={handleSubmit}
+                onClose={onClose}
+                showPhoneModal={showPhoneModal}
+                setShowPhoneModal={setShowPhoneModal}
+              />
+            )}
+
+            {step === "ticket" && (
+              <TicketTypeModal
+                onClose={onClose}
+                setStep={setStep}
+                handleRegister={handleRegister}
+                selectedTicket={selectedTicket}
+                setSelectedTicket={setSelectedTicket}
+                loading={loading}
+                registerStatus={registerStatus}
+              />
+            )}
+
+            {step === "success" && (
+              <SuccessModal
+                onClose={onClose}
+                setStep={setStep}
+                ticketID={ticketID}
+              />
+            )}
+
+            {step === "avatar" && (
+              <div className="w-full h-full">
+                <AvatarGeneratorModal
+                  isOpen={true}
+                  onClose={() => {
+                    // When avatar closes, close the entire registration flow
+                    onClose();
+                  }}
+                  registrationData={{
+                    name: formData.name,
+                    email: formData.email,
+                    phone_no: `${formData.countryCode}${formData.phone}`,
+                    district: formData.district,
+                    category: formData.category,
+                    organization: formData.organization,
+                  }}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* RIGHT SIDE - Images/GIF */}
+          {step !== "avatar" && (
+            <div className="hidden md:block md:w-1/2 relative bg-gray-900 overflow-hidden">
               {step === "form" && (
-                <RegistrationForm
-                  formData={formData}
-                  handleChange={handleChange}
-                  focusedField={focusedField}
-                  setFocusedField={setFocusedField}
-                  getBoxStyle={getBoxStyle}
-                  handleSubmit={handleSubmit}
-                  onClose={onClose}
-                  showPhoneModal={showPhoneModal}
-                  setShowPhoneModal={setShowPhoneModal}
-                />
-              )}
-
-              {step === "ticket" && (
-                <TicketTypeModal
-                  onClose={onClose}
-                  setStep={setStep}
-                  handleRegister={handleRegister}
-                  selectedTicket={selectedTicket}
-                  setSelectedTicket={setSelectedTicket}
-                  loading={loading}
-                  registerStatus={registerStatus}
-                />
-              )}
-
-              {step === "success" && (
-                <SuccessModal
-                  onClose={onClose}
-                  setStep={setStep}
-                  ticketID={ticketID}
-                />
-              )}
-
-              {step === "avatar" && (
-                <div className="w-full h-full">
-                  <AvatarGeneratorModal
-                    isOpen={true}
-                    onClose={() => {
-                      // When avatar closes, close the entire registration flow
-                      onClose();
-                    }}
-                    registrationData={{
-                      name: formData.name,
-                      email: formData.email,
-                      phone_no: `${formData.countryCode}${formData.phone}`,
-                      district: formData.district,
-                      category: formData.category,
-                      organization: formData.organization,
+                <div className="absolute inset-0 flex items-center justify-center p-0">
+                  <img
+                    src="/assets/images/reg1.png"
+                    alt="Register"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
                     }}
                   />
                 </div>
               )}
+
+              {step === "ticket" && (
+                <div className="absolute inset-0 flex items-center justify-center p-0">
+                  <img
+                    src="/assets/images/reg1.png"
+                    alt="Choose Ticket"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
+
+              {step === "success" && (
+                <div className="absolute inset-0 flex items-center justify-center p-4 lg:p-8">
+                  <SuccessRightSide ticketID={ticketID} />
+                </div>
+              )}
             </div>
-
-            {/* RIGHT SIDE - Images/GIF */}
-            {step !== "avatar" && (
-              <div className="hidden md:block md:w-1/2 relative bg-gray-900">
-                {step === "form" && (
-                  <div className="absolute inset-0 flex items-center justify-center p-0">
-                    <img
-                      src="/assets/images/reg1.png"
-                      alt="Register"
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
-                  </div>
-                )}
-
-                {step === "ticket" && (
-                  <div className="absolute inset-0 flex items-center justify-center p-0">
-                    <img
-                      src="/assets/images/reg1.png"
-                      alt="Choose Ticket"
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
-                  </div>
-                )}
-
-                {step === "success" && (
-                  <div className="absolute inset-0 flex items-center justify-center p-8">
-                    <SuccessRightSide ticketID={ticketID} />
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
 
@@ -499,7 +509,7 @@ function RegistrationForm({
             onChange={handleChange}
             onFocus={() => setFocusedField("name")}
             onBlur={() => setFocusedField(null)}
-            className="p-3 w-full md:w-[70%] border rounded-lg text-gray-700 h-[45px] placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="p-3 w-full lg:w-[85%] border rounded-lg text-gray-700 h-[45px] placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             style={{ ...getBoxStyle("name")}}
             placeholder="Enter your name"
             required
@@ -518,7 +528,7 @@ function RegistrationForm({
             onChange={handleChange}
             onFocus={() => setFocusedField("email")}
             onBlur={() => setFocusedField(null)}
-            className="p-3 w-full md:w-[70%] border h-[45px] rounded-lg text-gray-700 placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="p-3 w-full lg:w-[85%] border h-[45px] rounded-lg text-gray-700 placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             style={{ ...getBoxStyle("email")}}
             placeholder="Enter your email"
             required
@@ -530,7 +540,7 @@ function RegistrationForm({
           <label className="block text-sm font-medium text-gray-900 mb-1.5">
             Phone Number <span className="text-red-500">*</span>
           </label>
-          <div className="flex gap-2 w-full md:w-[70%]">
+          <div className="flex gap-2 w-full lg:w-[85%]">
             <select
               name="countryCode"
               value={formData.countryCode}
@@ -573,7 +583,7 @@ function RegistrationForm({
             name="district"
             value={formData.district}
             onChange={handleChange}
-            className="pl-3 w-full md:w-[70%] appearance-none border rounded-lg h-[45px] text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="pl-3 w-full lg:w-[85%] appearance-none border rounded-lg h-[45px] text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             style={{ ...getBoxStyle("district") }}
             required
           >
@@ -613,7 +623,7 @@ function RegistrationForm({
             name="category"
             value={formData.category}
             onChange={handleChange}
-            className="pl-3 w-full md:w-[70%] appearance-none border rounded-lg h-[45px] text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="pl-3 w-full lg:w-[85%] appearance-none border rounded-lg h-[45px] text-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             style={{ ...getBoxStyle("category") }}
             required
           >
@@ -642,7 +652,7 @@ function RegistrationForm({
             onChange={handleChange}
             onFocus={() => setFocusedField("organization")}
             onBlur={() => setFocusedField(null)}
-            className="p-3 w-full md:w-[70%] border rounded-lg text-gray-700 h-[45px] placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="p-3 w-full lg:w-[85%] border rounded-lg text-gray-700 h-[45px] placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             style={{ ...getBoxStyle("organization")}}
             placeholder="Enter your organization"
             required
@@ -686,7 +696,7 @@ function RegistrationForm({
         <div className="pt-4 pb-10">
           <button
             type="submit"
-            className="w-full md:w-[70%] py-4 bg-[#3399FF] text-white rounded-xl font-semibold text-lg hover:bg-blue-600 active:scale-[0.98] transition-all shadow-lg shadow-blue-200"
+            className="w-full lg:w-[85%] py-4 bg-[#3399FF] text-white rounded-xl font-semibold text-lg hover:bg-blue-600 active:scale-[0.98] transition-all shadow-lg shadow-blue-200"
           >
             Continue to Choose Ticket
           </button>
