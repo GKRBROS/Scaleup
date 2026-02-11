@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "postinstall": "npm rebuild",
+    "postinstall": "echo 'Postinstall skipped to save memory on CI'",
     "lint": "eslint"
   },
   "optionalDependencies": {
