@@ -265,7 +265,15 @@ export function AiModalPop({
           toast.success("OTP sent to your email");
         } else {
           console.error("Failed to send OTP", otpData);
-          toast.error(otpData.error || "Failed to send OTP. Please try again.");
+          if (otpRes.status === 404) {
+            toast.error("Email not registered. Please register first.");
+            if (onOpenRegistration) {
+              onOpenRegistration();
+              setShowPhoneModal(false);
+            }
+          } else {
+            toast.error(otpData.error || "Failed to send OTP. Please try again.");
+          }
         }
       } else if (makemypassRes.status === 404 || makemypassRes.status === 200) {
         // User not registered -> Redirect to registration form
@@ -339,11 +347,7 @@ export function AiModalPop({
         }
 
         toast.success("Verified successfully!");
-        if (shouldOpenAvatarAfterOtp) {
-          handleOpenAvatarGenerator();
-        } else {
-          setShowPhoneModal(false);
-        }
+        handleOpenAvatarGenerator();
       } else {
         toast.error(responseData.error || "Invalid OTP. Please try again.");
       }
