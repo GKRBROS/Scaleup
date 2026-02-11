@@ -248,8 +248,8 @@ export function AiModalPop({
       // Handle response based on status
       if (makemypassRes.status === 400) {
         // User exists but needs verification -> Redirect to OTP verification
-        // Call /api/otp/generate endpoint to create OTP
-        const otpRes = await fetch("/api/otp/generate", {
+        // Call /scaleup2026/otp/generate endpoint to create OTP
+        const otpRes = await fetch("https://scaleup.frameforge.one/scaleup2026/otp/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -318,7 +318,7 @@ export function AiModalPop({
     setLoading(true);
     try {
       const response = await fetch(
-        "/api/otp/verify",
+        "https://scaleup.frameforge.one/scaleup2026/otp/verify",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
