@@ -341,26 +341,41 @@ export function AiModalPop({
 
       if (response.ok) {
         const user = responseData.user || {};
+        
+        // Check if the image exists and is ready
+        // 1. Try to get it from the user object directly
+        // 2. Try to fetch the latest status from /user/{userId} to see if it's actually there
+        
         const rawBackendImageUrl =
           user.generated_image_url ||
           responseData.generated_image_url ||
-          user.photo_url; // Fallback to photo_url if generated is missing
+          user.photo_url;
         
-        console.log("Extracted raw image URL:", rawBackendImageUrl);
+        console.log("Extracted raw image URL from OTP response:", rawBackendImageUrl);
         
         if (rawBackendImageUrl) {
           const backendImageUrl = getAbsoluteUrl(rawBackendImageUrl);
-          console.log("Final Absolute image URL:", backendImageUrl);
+          console.log("Checking if image is truly accessible:", backendImageUrl);
           
-          if (typeof window !== "undefined") {
-            localStorage.setItem(
-              `scaleup2026:final_image_url:${mail}`,
-              backendImageUrl,
-            );
+          // Verify accessibility before showing the modal
+          try {
+            const checkRes = await fetch(`/api/proxy-image?url=${encodeURIComponent(backendImageUrl)}&disposition=inline`);
+            if (checkRes.ok) {
+              console.log("Image confirmed accessible via proxy");
+              if (typeof window !== "undefined") {
+                localStorage.setItem(`scaleup2026:final_image_url:${mail}`, backendImageUrl);
+              }
+              handleShowExistingImage(backendImageUrl);
+              setLoading(false);
+              return;
+            } else {
+              console.warn("Image URL exists but proxy returned error:", checkRes.status);
+              // If proxy fails with 403/404, maybe the image isn't actually ready yet or S3 link expired
+              // Fallback to generator in this case to allow user to regenerate
+            }
+          } catch (e) {
+            console.error("Error checking image accessibility:", e);
           }
-          handleShowExistingImage(backendImageUrl);
-          setLoading(false);
-          return;
         }
 
         toast.success("Verified successfully!");
