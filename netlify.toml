@@ -4,4 +4,5 @@
 
 [build.environment]
   NEXT_DISABLE_TURBOPACK = "1"
+  NEXT_TURBO = "0"
   NODE_OPTIONS = "--max_old_space_size=4096"
