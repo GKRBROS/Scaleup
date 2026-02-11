@@ -780,14 +780,6 @@ export function AiModalPop({
                 >
                   Download
                 </button>
-                <a
-                  href={existingImageUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 rounded-xl sm:rounded-2xl bg-zinc-100 px-6 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base font-semibold text-zinc-900 transition hover:bg-zinc-200 min-w-[140px]"
-                >
-                  View Direct
-                </a>
               </div>
             </div>
         </DialogContent>
