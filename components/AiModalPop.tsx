@@ -64,8 +64,9 @@ export function AiModalPop({
 
   const getAbsoluteUrl = (url: string) => {
     if (!url) return "";
-    if (url.startsWith("http") || url.startsWith("https")) return url;
-    return `https://scaleup.frameforge.one${url.startsWith("/") ? "" : "/"}${url}`;
+    if (url.startsWith("http://") || url.startsWith("https://")) return url;
+    const cleanUrl = url.startsWith("/") ? url.slice(1) : url;
+    return `https://scaleup.frameforge.one/${cleanUrl}`;
   };
 
   const getVerifiedAt = (email: string) => {
@@ -344,6 +345,7 @@ export function AiModalPop({
         
         if (rawBackendImageUrl) {
           const backendImageUrl = getAbsoluteUrl(rawBackendImageUrl);
+          console.log("OTP Verification: Found generated image URL:", backendImageUrl);
           // Store it in localStorage for future use
           if (typeof window !== "undefined") {
             localStorage.setItem(
@@ -451,7 +453,12 @@ export function AiModalPop({
   };
 
   const handleDownloadExistingImage = async () => {
-    if (!existingImageUrl) return;
+    if (!existingImageUrl) {
+      console.warn("handleDownloadExistingImage: No existingImageUrl available");
+      return;
+    }
+
+    console.log("handleDownloadExistingImage: Starting with URL:", existingImageUrl);
 
     try {
       // Use proxy to fetch image to bypass CORS and force download
@@ -460,11 +467,18 @@ export function AiModalPop({
         existingImageUrl
       )}&filename=${encodeURIComponent(filename)}&disposition=attachment`;
 
+      console.log("handleDownloadExistingImage: Using proxy URL:", proxyUrl);
+
       const response = await fetch(proxyUrl);
-      if (!response.ok) throw new Error("Failed to fetch image via proxy");
+      if (!response.ok) {
+        console.error("handleDownloadExistingImage: Proxy response not OK:", response.status);
+        throw new Error("Failed to fetch image via proxy");
+      }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
+      console.log("handleDownloadExistingImage: Created blob URL:", url);
+
       const link = document.createElement("a");
       link.href = url;
       link.download = filename;
@@ -473,7 +487,7 @@ export function AiModalPop({
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Error downloading image:", error);
+      console.error("handleDownloadExistingImage: Error during download process:", error);
       toast.error("Error downloading image. Opening in new tab instead.");
       window.open(existingImageUrl, "_blank", "noopener,noreferrer");
     }

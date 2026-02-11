@@ -82,8 +82,9 @@ const loadingMessages = [
 
 const getAbsoluteUrl = (url: string) => {
   if (!url) return "";
-  if (url.startsWith("http") || url.startsWith("https")) return url;
-  return `https://scaleup.frameforge.one${url.startsWith("/") ? "" : "/"}${url}`;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  const cleanUrl = url.startsWith("/") ? url.slice(1) : url;
+  return `https://scaleup.frameforge.one/${cleanUrl}`;
 };
 
 const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
@@ -482,36 +483,50 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
   const handleDownload = async () => {
     let imageUrl = generatedImageUrl;
+    console.log("handleDownload: Starting with imageUrl:", imageUrl);
 
     if (!imageUrl && generatedUserId) {
+      console.log("handleDownload: No imageUrl, fetching by userId:", generatedUserId);
       try {
         const response = await fetch(`https://scaleup.frameforge.one/scaleup2026/user/${generatedUserId}`);
         const text = await response.text();
         const result = text ? JSON.parse(text) : {};
         const fetchedUrl = extractFinalImageUrl(result);
+        console.log("handleDownload: Fetched URL from API:", fetchedUrl);
 
         if (response.ok && fetchedUrl) {
           const absUrl = getAbsoluteUrl(fetchedUrl);
           imageUrl = absUrl;
           setGeneratedImageUrl(absUrl);
+          console.log("handleDownload: Updated imageUrl to absolute:", absUrl);
         }
       } catch (error) {
-        console.error("Error fetching generated image:", error);
+        console.error("handleDownload: Error fetching generated image:", error);
       }
     }
 
-    if (!imageUrl) return;
+    if (!imageUrl) {
+      console.warn("handleDownload: No imageUrl available for download");
+      toast.error("Image not ready for download yet.");
+      return;
+    }
 
     try {
       // Use proxy to fetch image to bypass CORS and force download
       const filename = `avatar-${formData.name || "user"}.png`;
       const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl)}&filename=${encodeURIComponent(filename)}&disposition=attachment`;
+      console.log("handleDownload: Using proxy URL:", proxyUrl);
       
       const response = await fetch(proxyUrl);
-      if (!response.ok) throw new Error("Failed to fetch image");
+      if (!response.ok) {
+        console.error("handleDownload: Proxy response not OK:", response.status);
+        throw new Error("Failed to fetch image via proxy");
+      }
       
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
+      console.log("handleDownload: Created blob URL:", url);
+      
       const link = document.createElement("a");
       link.href = url;
       link.download = filename;
@@ -520,8 +535,8 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Error downloading image:", error);
-      toast.error("Error downloading image. Opening in new tab instead.");
+      console.error("handleDownload: Error during download process:", error);
+      toast.error("Download failed. Opening in new tab instead.");
       window.open(imageUrl, "_blank", "noopener,noreferrer");
     }
   };
