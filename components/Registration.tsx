@@ -953,7 +953,7 @@ function SuccessModal({
         );
 
         if (ticketResponse.ok) {
-          const ticketData = await ticketResponse.ok ? await ticketResponse.json() : null;
+          const ticketData = await ticketResponse.json();
           console.log("Ticket download response:", ticketData);
 
           const imageUrl =

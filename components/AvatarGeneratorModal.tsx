@@ -369,17 +369,18 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     }
 
     setIsGenerating(true);
+    const oldImageUrl = generatedImageUrl;
     setGeneratedImageUrl("");
     setIsGenerated(false);
     
     // Ensure generationType is valid, fallback to superhero if needed
     const finalGenerationType = generationType || "superhero";
 
-    const fetchGeneratedImageUrl = async (userId: string) => {
+    const fetchGeneratedImageUrl = async (userId: string, currentOldUrl: string) => {
       const maxAttempts = 60; // Increase to 2 minutes
       const delayMs = 2000;
 
-      console.log(`Starting polling for user ${userId}...`);
+      console.log(`Starting polling for user ${userId}, ignoring old URL: ${currentOldUrl}...`);
 
       for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
         try {
@@ -419,8 +420,17 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
           const finalUrl = extractFinalImageUrl(result);
           if (finalUrl) {
-            console.log(`Polling successful on attempt ${attempt + 1}! Found image:`, finalUrl);
-            return getAbsoluteUrl(finalUrl);
+            const absoluteUrl = getAbsoluteUrl(finalUrl);
+            // If the URL is exactly the same as the old one, it's likely stale data
+            if (currentOldUrl && absoluteUrl === currentOldUrl) {
+              if (attempt % 5 === 0) {
+                console.log(`Polling attempt ${attempt + 1}: Found old image URL, still waiting for new one...`);
+              }
+              await new Promise((resolve) => setTimeout(resolve, delayMs));
+              continue;
+            }
+            console.log(`Polling successful on attempt ${attempt + 1}! Found new image:`, absoluteUrl);
+            return absoluteUrl;
           }
           
           if (attempt % 5 === 0) {
@@ -496,49 +506,55 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       const finalImageUrl = extractFinalImageUrl(result);
       console.log("Extracted finalImageUrl from initial response:", finalImageUrl);
       
+      // Even if an image is returned in initial response, if it's the same as old one, we must poll
       if (finalImageUrl) {
         const absoluteUrl = getAbsoluteUrl(finalImageUrl);
         
-        setGeneratedImageUrl(absoluteUrl);
-        setIsGenerated(true);
-        setIsGenerating(false);
-        
-        // After successful generation, send email with the image
-        if (formData.email) {
-          fetch("/api/send-mail", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              to: formData.email,
-              subject: "Your ScaleUp Conclave 2026 Avatar is Ready!",
-              finalImageUrl: absoluteUrl,
-            }),
-          });
-        }
-
-        // After successful generation, update the DB with final image info if user_id is present
-        if (result.user_id) {
-          const userId = result.user_id;
-          try {
-            await fetch(`https://scaleup.frameforge.one/scaleup2026/user/${userId}`, {
-              method: "PATCH",
+        if (!oldImageUrl || absoluteUrl !== oldImageUrl) {
+          console.log("Found NEW image in initial response, skipping polling");
+          setGeneratedImageUrl(absoluteUrl);
+          setIsGenerated(true);
+          setIsGenerating(false);
+          
+          // After successful generation, send email with the image
+          if (formData.email) {
+            fetch("/api/send-mail", {
+              method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                generated_image_url: finalImageUrl,
-              })
+                to: formData.email,
+                subject: "Your ScaleUp Conclave 2026 Avatar is Ready!",
+                finalImageUrl: absoluteUrl,
+              }),
             });
-          } catch (updateError) {
-            console.error("Failed to update DB with final image info:", updateError);
           }
+
+          // After successful generation, update the DB with final image info if user_id is present
+          if (result.user_id) {
+            const userId = result.user_id;
+            try {
+              await fetch(`https://scaleup.frameforge.one/scaleup2026/user/${userId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  generated_image_url: finalImageUrl,
+                })
+              });
+            } catch (updateError) {
+              console.error("Failed to update DB with final image info:", updateError);
+            }
+          }
+          return;
+        } else {
+          console.log("Initial response contained the OLD image URL, proceeding to poll for the new one");
         }
-        return;
       }
 
       // Use user_id from response if available, otherwise use the one we have in formData
       const pollUserId = result.user_id || formData.userId || formData.phone_no;
       
       if (pollUserId) {
-        const imageUrl = await fetchGeneratedImageUrl(pollUserId);
+        const imageUrl = await fetchGeneratedImageUrl(pollUserId, oldImageUrl);
         if (imageUrl) {
           setGeneratedImageUrl(imageUrl);
           setIsGenerated(true);
