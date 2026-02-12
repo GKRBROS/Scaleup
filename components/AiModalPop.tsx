@@ -13,9 +13,11 @@ import { toast, Toaster } from "react-hot-toast";
 import AvatarGeneratorModal from "@/components/AvatarGeneratorModal";
 
 interface AvatarRegistrationData {
+  user_id?: string;
   name: string;
   email: string;
   phone_no?: string;
+  dial_code?: string;
   district: string;
   category: string;
   organization: string;
@@ -73,50 +75,68 @@ export function AiModalPop({
     console.log("extractFinalImageUrl processing payload:", JSON.stringify(payload, null, 2));
     if (!payload || typeof payload !== "object") return "";
 
-    const direct =
-      payload.signed_image_url ||
-      payload.final_image_url ||
-      payload.generated_image_url ||
-      payload.image_url ||
-      payload.photo_url ||
-      payload.photo ||
-      payload?.user?.signed_image_url ||
-      payload?.user?.final_image_url ||
-      payload?.user?.generated_image_url ||
-      payload?.user?.image_url ||
-      payload?.user?.photo_url ||
-      payload?.user?.photo ||
-      payload?.data?.signed_image_url ||
-      payload?.data?.final_image_url ||
-      payload?.data?.generated_image_url ||
-      payload?.data?.image_url ||
-      payload?.result?.signed_image_url ||
-      payload?.result?.final_image_url ||
-      payload?.result?.generated_image_url ||
-      payload?.result?.image_url;
+    const candidates: string[] = [];
+    const addIfString = (val: any) => {
+      if (typeof val === "string" && val.trim() && val !== "null" && val !== "undefined") {
+        candidates.push(val.trim());
+      }
+    };
 
-    if (typeof direct === "string" && direct.trim() && direct !== "null" && direct !== "undefined") {
-      console.log("Found direct image URL:", direct);
-      return direct;
-    }
+    const keys = [
+      "signed_image_url",
+      "final_image_url",
+      "generated_image_url",
+      "image_url",
+      "photo_url",
+      "photo"
+    ];
 
-    const details = payload?.details || payload?.user?.details;
-    if (typeof details === "string") {
-      console.log("Checking details field for URL:", details);
-      try {
-        const parsed = JSON.parse(details);
-        const nested = extractFinalImageUrl(parsed);
-        if (nested) return nested;
-      } catch {
-        const match = details.match(/https?:\/\/[^\s"']+/i);
-        if (match?.[0]) {
-          console.log("Found URL via regex match in details:", match[0]);
-          return match[0];
+    // Check direct keys
+    keys.forEach(k => addIfString(payload[k]));
+    
+    // Check nested objects
+    ["user", "data", "result"].forEach(objKey => {
+      if (payload[objKey] && typeof payload[objKey] === "object") {
+        keys.forEach(k => addIfString(payload[objKey][k]));
+      }
+    });
+
+    if (candidates.length === 0) {
+      const details = payload?.details || payload?.user?.details;
+      if (typeof details === "string") {
+        try {
+          const parsed = JSON.parse(details);
+          return extractFinalImageUrl(parsed);
+        } catch {
+          const match = details.match(/https?:\/\/[^\s"']+/i);
+          if (match?.[0]) return match[0];
         }
       }
+      return "";
     }
-    console.log("No image URL found in this payload level");
-    return "";
+
+    // Prioritize generated/final images
+    const priority = candidates.filter(url => 
+      url.toLowerCase().includes("/final/") || 
+      url.toLowerCase().includes("/generated/") || 
+      url.toLowerCase().includes("merged") || 
+      url.toLowerCase().includes("avatar")
+    );
+    
+    if (priority.length > 0) {
+      console.log("Found prioritized image URL:", priority[0]);
+      return priority[0];
+    }
+
+    // Avoid original uploads if possible
+    const filtered = candidates.filter(url => !url.toLowerCase().includes("/uploads/"));
+    if (filtered.length > 0) {
+      console.log("Found filtered image URL (non-upload):", filtered[0]);
+      return filtered[0];
+    }
+
+    console.log("Falling back to first candidate image URL:", candidates[0]);
+    return candidates[0];
   };
 
   const getVerifiedAt = (email: string) => {
@@ -252,9 +272,7 @@ export function AiModalPop({
   };
 
   const handleShowExistingImage = (url: string) => {
-    console.log("handleShowExistingImage called with URL:", url);
     const absUrl = getAbsoluteUrl(url);
-    console.log("Converted to absolute URL:", absUrl);
     setExistingImageUrl(absUrl);
     setShowExistingImageModal(true);
     setShowPhoneModal(false);
@@ -494,9 +512,11 @@ export function AiModalPop({
     }
 
     const finalRegistrationData = {
+      user_id: recoveredData?.user_id || userData?.user_id || "",
       name: recoveredData?.name || "",
       email: mail.trim(),
-      phone_no: recoveredData?.phone_no || recoveredData?.phone || "",
+      phone_no: recoveredData?.phone_no || recoveredData?.phone || userData?.phone_no || "",
+      dial_code: recoveredData?.dial_code || userData?.dial_code || "+91",
       district: recoveredData?.district || "",
       category: recoveredData?.category || "",
       organization: recoveredData?.organization || "",
@@ -541,11 +561,9 @@ export function AiModalPop({
 
   const handleDownloadExistingImage = async () => {
     if (!existingImageUrl) {
-      console.warn("handleDownloadExistingImage: No existingImageUrl available");
       return;
     }
 
-    console.log("handleDownloadExistingImage: Starting with URL:", existingImageUrl);
     setLoading(true);
 
     try {
@@ -563,17 +581,13 @@ export function AiModalPop({
         targetUrl
       )}&filename=${encodeURIComponent(filename)}&disposition=attachment`;
 
-      console.log("handleDownloadExistingImage: Using proxy URL:", proxyUrl);
-
       const response = await fetch(proxyUrl);
       if (!response.ok) {
-        console.error("handleDownloadExistingImage: Proxy response not OK:", response.status);
         throw new Error(`Failed to fetch image via proxy (Status: ${response.status})`);
       }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      console.log("handleDownloadExistingImage: Created blob URL:", url);
 
       const link = document.createElement("a");
       link.href = url;

@@ -52,6 +52,7 @@ The `category` field must be one of these values:
 - `Business Owners`
 - `NRI / Gulf Retunees`
 - `Government Officials`
+- `Other`
 
 ### Avatar Style Types
 

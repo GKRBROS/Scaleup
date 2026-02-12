@@ -17,9 +17,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-hot-toast";
 
 interface AvatarRegistrationData {
+  user_id?: string;
   name: string;
   email: string;
   phone_no?: string;
+  dial_code?: string;
   district: string;
   category: string;
   organization: string;
@@ -115,13 +117,31 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   }, []);
 
   const [formData, setFormData] = useState({
+    userId: registrationData?.user_id || "",
     name: registrationData?.name || "",
     email: registrationData?.email || "",
     phone_no: registrationData?.phone_no || "0000000000",
+    dialCode: registrationData?.dial_code || "+91",
     district: registrationData?.district || "",
     category: registrationData?.category || "",
     organization: registrationData?.organization || "",
   });
+
+  useEffect(() => {
+    if (registrationData && isOpen) {
+      console.log("AvatarGeneratorModal: registrationData or isOpen changed, updating formData:", registrationData);
+      setFormData({
+        userId: registrationData.user_id || "",
+        name: registrationData.name || "",
+        email: registrationData.email || "",
+        phone_no: registrationData.phone_no || "0000000000",
+        dialCode: registrationData.dial_code || "+91",
+        district: registrationData.district || "",
+        category: registrationData.category || "",
+        organization: registrationData.organization || "",
+      });
+    }
+  }, [registrationData, isOpen]);
 
   useEffect(() => {
     if (!isGenerating) return;
@@ -132,18 +152,18 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   }, [isGenerating]);
 
   useEffect(() => {
-    if (registrationData && isOpen) {
-      console.log("AvatarGeneratorModal: Received registrationData:", registrationData);
-      setFormData({
-        name: registrationData.name || "",
-        email: registrationData.email || "",
-        phone_no: registrationData.phone_no || "0000000000",
-        district: registrationData.district || "",
-        category: registrationData.category || "",
-        organization: registrationData.organization || "",
-      });
+    if (isOpen) {
+      console.log("AvatarGeneratorModal: Modal opened, resetting local state");
+      setIsGenerated(false);
+      setIsGenerating(false);
+      setGeneratedImageUrl("");
+      setGeneratedUserId("");
+      setPhotoFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
-  }, [registrationData, isOpen]);
+  }, [isOpen]);
 
   const activeOption = useMemo(
     () => generationOptions.find((o) => o.id === previewType)!,
@@ -248,37 +268,71 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   };
 
   const extractFinalImageUrl = (payload: any): string => {
+    console.log("AvatarGeneratorModal: extractFinalImageUrl processing payload:", JSON.stringify(payload, null, 2));
     if (!payload || typeof payload !== "object") return "";
 
-    const direct =
-      payload.signed_image_url ||
-      payload.final_image_url ||
-      payload.generated_image_url ||
-      payload.image_url ||
-      payload?.data?.signed_image_url ||
-      payload?.data?.final_image_url ||
-      payload?.data?.generated_image_url ||
-      payload?.data?.image_url ||
-      payload?.result?.signed_image_url ||
-      payload?.result?.final_image_url ||
-      payload?.result?.generated_image_url ||
-      payload?.result?.image_url;
-
-    if (typeof direct === "string" && direct.trim()) return direct;
-
-    const details = payload?.details;
-    if (typeof details === "string") {
-      try {
-        const parsed = JSON.parse(details);
-        const nested = extractFinalImageUrl(parsed);
-        if (nested) return nested;
-      } catch {
-        const match = details.match(/https?:\/\/[^\s"']+/i);
-        if (match?.[0]) return match[0];
+    const candidates: string[] = [];
+    const addIfString = (val: any) => {
+      if (typeof val === "string" && val.trim() && val !== "null" && val !== "undefined") {
+        candidates.push(val.trim());
       }
+    };
+
+    const keys = [
+      "signed_image_url",
+      "final_image_url",
+      "generated_image_url",
+      "image_url",
+      "photo_url",
+      "photo"
+    ];
+
+    // Check direct keys
+    keys.forEach(k => addIfString(payload[k]));
+    
+    // Check nested objects
+    ["user", "data", "result"].forEach(objKey => {
+      if (payload[objKey] && typeof payload[objKey] === "object") {
+        keys.forEach(k => addIfString(payload[objKey][k]));
+      }
+    });
+
+    if (candidates.length === 0) {
+      const details = payload?.details || payload?.user?.details;
+      if (typeof details === "string") {
+        try {
+          const parsed = JSON.parse(details);
+          return extractFinalImageUrl(parsed);
+        } catch {
+          const match = details.match(/https?:\/\/[^\s"']+/i);
+          if (match?.[0]) return match[0];
+        }
+      }
+      return "";
     }
 
-    return "";
+    // Prioritize generated/final images
+    const priority = candidates.filter(url => 
+      url.toLowerCase().includes("/final/") || 
+      url.toLowerCase().includes("/generated/") || 
+      url.toLowerCase().includes("merged") || 
+      url.toLowerCase().includes("avatar")
+    );
+    
+    if (priority.length > 0) {
+      console.log("AvatarGeneratorModal: Found prioritized image URL:", priority[0]);
+      return priority[0];
+    }
+
+    // Avoid original uploads if possible
+    const filtered = candidates.filter(url => !url.toLowerCase().includes("/uploads/"));
+    if (filtered.length > 0) {
+      console.log("AvatarGeneratorModal: Found filtered image URL (non-upload):", filtered[0]);
+      return filtered[0];
+    }
+
+    console.log("AvatarGeneratorModal: Falling back to first candidate image URL:", candidates[0]);
+    return candidates[0];
   };
 
 
@@ -315,11 +369,11 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     }
 
     setIsGenerating(true);
-    console.log("isGenerating set to true");
+    setGeneratedImageUrl("");
+    setIsGenerated(false);
     
     // Ensure generationType is valid, fallback to superhero if needed
     const finalGenerationType = generationType || "superhero";
-    console.log("Using generation type:", finalGenerationType);
 
     const fetchGeneratedImageUrl = async (userId: string) => {
       const maxAttempts = 60; // Increase to 2 minutes
@@ -329,7 +383,24 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
       for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
         try {
-          const response = await fetch(`https://scaleup.frameforge.one/scaleup2026/user/${userId}`);
+          // Add dial_code to query params as required by backend for phone number IDs
+          const url = new URL(`https://scaleup.frameforge.one/scaleup2026/user/${userId}`);
+          url.searchParams.append("t", Date.now().toString());
+          if (formData.dialCode) {
+            url.searchParams.append("dial_code", formData.dialCode);
+          }
+
+          const response = await fetch(url.toString());
+          
+          // 202 Accepted means still processing - we should continue polling
+          if (response.status === 202) {
+            if (attempt % 5 === 0) {
+              console.log(`Polling attempt ${attempt + 1}: Received 202 (Processing)...`);
+            }
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
+            continue;
+          }
+
           if (!response.ok) {
             console.warn(`Polling attempt ${attempt + 1}: API returned status ${response.status}`);
             await new Promise((resolve) => setTimeout(resolve, delayMs));
@@ -368,6 +439,11 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
     try {
       const apiFormData = new FormData();
+      // Use userId (UUID) if available, otherwise fallback to phone_no as per backend spec
+      apiFormData.append("userId", formData.userId || formData.phone_no);
+      if (formData.dialCode) {
+        apiFormData.append("dial_code", formData.dialCode);
+      }
       apiFormData.append("name", formData.name);
       apiFormData.append("email", formData.email);
       apiFormData.append("phone_no", formData.phone_no);
@@ -376,10 +452,6 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       apiFormData.append("organization", formData.organization);
       apiFormData.append("prompt_type", getPromptType(finalGenerationType));
       apiFormData.append("photo", photoFile);
-
-      console.log("Sending request to generate API...");
-      console.log("Generation type:", finalGenerationType);
-      console.log("Prompt type:", getPromptType(finalGenerationType));
 
       let response;
       try {
@@ -417,27 +489,42 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       }
 
       if (result?.user_id) {
+        console.log("Setting generatedUserId to:", result.user_id);
         setGeneratedUserId(result.user_id);
       }
 
       const finalImageUrl = extractFinalImageUrl(result);
+      console.log("Extracted finalImageUrl from initial response:", finalImageUrl);
+      
       if (finalImageUrl) {
-        setGeneratedImageUrl(getAbsoluteUrl(finalImageUrl));
+        const absoluteUrl = getAbsoluteUrl(finalImageUrl);
+        
+        setGeneratedImageUrl(absoluteUrl);
         setIsGenerated(true);
         setIsGenerating(false);
         
+        // After successful generation, send email with the image
+        if (formData.email) {
+          fetch("/api/send-mail", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              to: formData.email,
+              subject: "Your ScaleUp Conclave 2026 Avatar is Ready!",
+              finalImageUrl: absoluteUrl,
+            }),
+          });
+        }
+
         // After successful generation, update the DB with final image info if user_id is present
-        if (result.user_id || generatedUserId) {
-          const userId = result.user_id || generatedUserId;
-          console.log(`Updating DB for user ${userId} with generated image info...`);
+        if (result.user_id) {
+          const userId = result.user_id;
           try {
             await fetch(`https://scaleup.frameforge.one/scaleup2026/user/${userId}`, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 generated_image_url: finalImageUrl,
-                photo_url: result.photo_url || "",
-                aws_key: result.aws_key || ""
               })
             });
           } catch (updateError) {
@@ -447,22 +534,35 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         return;
       }
 
-      if (result.user_id) {
-        const imageUrl = await fetchGeneratedImageUrl(result.user_id);
+      // Use user_id from response if available, otherwise use the one we have in formData
+      const pollUserId = result.user_id || formData.userId || formData.phone_no;
+      
+      if (pollUserId) {
+        const imageUrl = await fetchGeneratedImageUrl(pollUserId);
         if (imageUrl) {
           setGeneratedImageUrl(imageUrl);
           setIsGenerated(true);
           
+          // After successful polling, send email with the image
+          if (formData.email) {
+            fetch("/api/send-mail", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                to: formData.email,
+                subject: "Your ScaleUp Conclave 2026 Avatar is Ready!",
+                finalImageUrl: imageUrl,
+              }),
+            });
+          }
+
           // Also update DB after polling success
-          console.log(`Updating DB after polling success for user ${result.user_id}...`);
           try {
-            await fetch(`https://scaleup.frameforge.one/scaleup2026/user/${result.user_id}`, {
+            await fetch(`https://scaleup.frameforge.one/scaleup2026/user/${pollUserId}`, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 generated_image_url: imageUrl,
-                // We might not have photo_url/aws_key here easily if not returned in polling, 
-                // but the backend usually updates these during generation anyway.
               })
             });
           } catch (updateError) {

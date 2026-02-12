@@ -65,28 +65,40 @@ export async function GET(req: NextRequest) {
   try {
     console.log("Proxy-image: Request received for URL:", url);
     
-    // Check if it's an S3 URL that might need a presigned URL
-    // We check for "s3" in hostname or "amazonaws.com"
+    /**
+     * URL ROUTING SYSTEM
+     * 1. Check for Amazon/S3 related patterns (3 designated patterns: s3 hostname, s3-region hostname, or X-Amz-Signature)
+     * 2. If it's an Amazon URL, handle S3-specific logic (extract key and presign if needed)
+     * 3. For all other URLs, bypass all S3 conversion/validation and pass through directly
+     */
     const isS3Url = url.includes("s3") && url.includes("amazonaws.com");
     const isAlreadyPresigned = url.includes("X-Amz-Signature");
+    const isS3Protocol = url.startsWith("s3://");
 
-    if (isS3Url && !isAlreadyPresigned) {
-      const key = extractS3Key(url);
-      if (key) {
-        console.log("Proxy-image: Generating presigned URL for S3 key:", key);
-        try {
-          const command = new GetObjectCommand({
-            Bucket: BUCKET_NAME,
-            Key: key,
-          });
-          // Increased expiresIn to 2 hours for safety
-          const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 7200 });
-          console.log("Proxy-image: Successfully generated presigned URL");
-          url = presignedUrl;
-        } catch (s3Error) {
-          console.error("Proxy-image: S3 Presigned URL generation failed:", s3Error);
+    const isAmazonRelated = isS3Url || isAlreadyPresigned || isS3Protocol;
+
+    if (isAmazonRelated) {
+      // Amazon-specific routing: handle S3 logic without proxy intervention for others
+      if (!isAlreadyPresigned) {
+        const key = extractS3Key(url);
+        if (key) {
+          console.log("Proxy-image: Amazon URL detected, generating presigned URL for S3 key:", key);
+          try {
+            const command = new GetObjectCommand({
+              Bucket: BUCKET_NAME,
+              Key: key,
+            });
+            const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 7200 });
+            console.log("Proxy-image: Successfully generated presigned URL for Amazon link");
+            url = presignedUrl;
+          } catch (s3Error) {
+            console.error("Proxy-image: Amazon presigned URL generation failed:", s3Error);
+          }
         }
       }
+    } else {
+      // Non-Amazon routing: Bypass all S3 logic and proxy intervention
+      console.log("Proxy-image: Non-Amazon URL detected, bypassing conversion and passing through directly");
     }
 
     console.log("Proxy-image: Final fetch target URL:", url);

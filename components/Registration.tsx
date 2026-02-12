@@ -65,6 +65,21 @@ export default function RegistrationModal({
     if (isOpen) {
       document.body.style.overflow = "hidden";
       window.dispatchEvent(new CustomEvent("registration-modal-opened"));
+      
+      // Reset form and step when opening
+      setStep("form");
+      setFormData({
+        name: "",
+        countryCode: "+91",
+        phone: "",
+        email: "",
+        district: "",
+        category: "",
+        organization: "",
+        previousAttendance: "",
+      });
+      setRegisterStatus("idle");
+      setSelectedTicket(null);
     } else {
       document.body.style.overflow = "";
       window.dispatchEvent(new CustomEvent("registration-modal-closed"));
@@ -99,6 +114,7 @@ export default function RegistrationModal({
     formData1.append("district", formData.district);
     formData1.append("organization", formData.organization);
     formData1.append("category", formData.category);
+
     formData1.append(
       "did_you_attend_the_previous_scaleup_conclave_",
       formData.previousAttendance
@@ -268,7 +284,8 @@ export default function RegistrationModal({
         const userDataToStore = {
           name: formData.name,
           email: formData.email,
-          phone_no: `${formData.countryCode}${formData.phone}`,
+          phone_no: formData.phone,
+          dial_code: formData.countryCode,
           district: formData.district,
           category: formData.category,
           organization: formData.organization,
@@ -281,7 +298,8 @@ export default function RegistrationModal({
       const registerPayload = {
         name: formData.name,
         email: formData.email,
-        phone_no: `${formData.countryCode}${formData.phone}`,
+        phone_no: formData.phone,
+        dial_code: formData.countryCode,
         district: formData.district,
         category: formData.category,
         organization: formData.organization,
@@ -307,6 +325,18 @@ export default function RegistrationModal({
           setLoading(false);
           setRegisterStatus("idle");
           return;
+        }
+
+        // Capture user_id from backend response
+        if (registerResult.user_id) {
+          console.log("Captured user_id from backend:", registerResult.user_id);
+          // Store user_id in localStorage for later use
+          if (typeof window !== "undefined") {
+            const storageKey = `scaleup2026:registration_data:${formData.email.toLowerCase().trim()}`;
+            const storedData = JSON.parse(localStorage.getItem(storageKey) || "{}");
+            storedData.user_id = registerResult.user_id;
+            localStorage.setItem(storageKey, JSON.stringify(storedData));
+          }
         }
       } catch (registerError) {
         console.error("Backend Register API call error:", registerError);
@@ -403,9 +433,11 @@ export default function RegistrationModal({
                     onClose();
                   }}
                   registrationData={{
+                    user_id: JSON.parse(localStorage.getItem(`scaleup2026:registration_data:${formData.email.toLowerCase().trim()}`) || "{}").user_id || "",
                     name: formData.name,
                     email: formData.email,
-                    phone_no: `${formData.countryCode}${formData.phone}`,
+                    phone_no: formData.phone,
+                    dial_code: formData.countryCode,
                     district: formData.district,
                     category: formData.category,
                     organization: formData.organization,
@@ -921,7 +953,7 @@ function SuccessModal({
         );
 
         if (ticketResponse.ok) {
-          const ticketData = await ticketResponse.json();
+          const ticketData = await ticketResponse.ok ? await ticketResponse.json() : null;
           console.log("Ticket download response:", ticketData);
 
           const imageUrl =
@@ -1019,7 +1051,7 @@ function SuccessModal({
         {/* Download Ticket Button */}
         {ticketImageUrl && !loading && (
           <a
-            href={`/api/proxy-image?url=${encodeURIComponent(ticketImageUrl)}&filename=scaleup-ticket-${ticketCode}.png`}
+            href={`/api/proxy-image?url=${encodeURIComponent(ticketImageUrl)}&filename=scaleup-ticket-${ticketCode}.png&disposition=attachment`}
             download={`scaleup-ticket-${ticketCode}.png`}
             className="w-full py-3 bg-gray-100 text-gray-900 font-semibold rounded-xl hover:bg-gray-200 transition-all shadow-sm mb-4 flex items-center justify-center gap-2"
             style={{ fontSize: '14px' }}
