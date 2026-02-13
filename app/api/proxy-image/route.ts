@@ -55,10 +55,13 @@ export async function HEAD(req: NextRequest) {
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
   let url = searchParams.get("url");
-  const filename = searchParams.get("filename") || "image.png";
-  const disposition = searchParams.get("disposition") || "attachment";
+    let filename = searchParams.get("filename") || "image.png";
+    const disposition = searchParams.get("disposition") || "attachment";
 
-  if (!url) {
+    // Sanitize filename to remove any characters that might break headers
+    filename = filename.replace(/[^a-zA-Z0-9.-]/g, "_");
+
+    if (!url) {
     return NextResponse.json({ error: "URL is required" }, { status: 400 });
   }
 
@@ -67,38 +70,38 @@ export async function GET(req: NextRequest) {
     
     /**
      * URL ROUTING SYSTEM
-     * 1. Check for Amazon/S3 related patterns (3 designated patterns: s3 hostname, s3-region hostname, or X-Amz-Signature)
-     * 2. If it's an Amazon URL, handle S3-specific logic (extract key and presign if needed)
-     * 3. For all other URLs, bypass all S3 conversion/validation and pass through directly
+     * 1. Check if the URL is an Amazon S3 URL that belongs to OUR bucket (frameforge)
+     * 2. Check if it's already presigned (contains X-Amz-Signature)
+     * 3. Check if it's using the s3:// protocol
+     * 
+     * If it's our bucket and not presigned, or if it's s3://, we use S3 client to get a presigned URL.
+     * For all other URLs (including other S3 buckets like MakeMyPass), we fetch them directly as public URLs.
      */
-    const isS3Url = url.includes("s3") && url.includes("amazonaws.com");
-    const isAlreadyPresigned = url.includes("X-Amz-Signature");
     const isS3Protocol = url.startsWith("s3://");
+    const isAlreadyPresigned = url.includes("X-Amz-Signature");
+    
+    // Only treat it as "Our S3" if it explicitly contains our bucket name and is an amazonaws link
+    const isOurS3Url = url.includes("amazonaws.com") && url.includes(BUCKET_NAME);
 
-    const isAmazonRelated = isS3Url || isAlreadyPresigned || isS3Protocol;
-
-    if (isAmazonRelated) {
-      // Amazon-specific routing: handle S3 logic without proxy intervention for others
-      if (!isAlreadyPresigned) {
-        const key = extractS3Key(url);
-        if (key) {
-          console.log("Proxy-image: Amazon URL detected, generating presigned URL for S3 key:", key);
-          try {
-            const command = new GetObjectCommand({
-              Bucket: BUCKET_NAME,
-              Key: key,
-            });
-            const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 7200 });
-            console.log("Proxy-image: Successfully generated presigned URL for Amazon link");
-            url = presignedUrl;
-          } catch (s3Error) {
-            console.error("Proxy-image: Amazon presigned URL generation failed:", s3Error);
-          }
+    if ((isOurS3Url || isS3Protocol) && !isAlreadyPresigned) {
+      // Amazon-specific routing for OUR bucket: extract key and presign
+      const key = extractS3Key(url);
+      if (key) {
+        console.log("Proxy-image: Our S3 bucket detected, generating presigned URL for key:", key);
+        try {
+          const command = new GetObjectCommand({
+            Bucket: BUCKET_NAME,
+            Key: key,
+          });
+          const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 7200 });
+          url = presignedUrl;
+        } catch (s3Error) {
+          console.error("Proxy-image: S3 presigned URL generation failed:", s3Error);
+          // Fallback to original URL if presigning fails
         }
       }
     } else {
-      // Non-Amazon routing: Bypass all S3 logic and proxy intervention
-      console.log("Proxy-image: Non-Amazon URL detected, bypassing conversion and passing through directly");
+      console.log("Proxy-image: Public URL or Already Presigned detected, fetching directly through proxy");
     }
 
     if (!url.startsWith("http")) {
