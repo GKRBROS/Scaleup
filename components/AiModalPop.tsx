@@ -83,6 +83,7 @@ export function AiModalPop({
     };
 
     const keys = [
+      "download_url",
       "signed_image_url",
       "final_image_url",
       "generated_image_url",
@@ -570,9 +571,11 @@ export function AiModalPop({
 
   const handleDownloadExistingImage = async () => {
     if (!existingImageUrl) {
+      console.error("handleDownloadExistingImage: No image URL available");
       return;
     }
 
+    console.log("handleDownloadExistingImage: Starting download for:", existingImageUrl);
     setLoading(true);
 
     try {
@@ -583,19 +586,32 @@ export function AiModalPop({
       let targetUrl = existingImageUrl;
       if (targetUrl.includes("/api/proxy-image?url=")) {
         const urlParams = new URLSearchParams(targetUrl.split("?")[1]);
-        targetUrl = urlParams.get("url") || targetUrl;
+        const extracted = urlParams.get("url");
+        if (extracted) {
+          console.log("handleDownloadExistingImage: Extracted target URL from proxy:", extracted);
+          targetUrl = extracted;
+        }
+      }
+
+      // Safety check: if targetUrl looks like a ticket, warn but proceed (or block)
+      const isTicket = targetUrl.toLowerCase().includes("-ticket") || targetUrl.toLowerCase().includes("makemypass.com");
+      if (isTicket) {
+        console.warn("handleDownloadExistingImage: WARNING - Target URL looks like a ticket!", targetUrl);
       }
 
       const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(
         targetUrl
       )}&filename=${encodeURIComponent(filename)}&disposition=attachment`;
 
+      console.log("handleDownloadExistingImage: Fetching via proxy:", proxyUrl);
       const response = await fetch(proxyUrl);
       if (!response.ok) {
         throw new Error(`Failed to fetch image via proxy (Status: ${response.status})`);
       }
 
       const blob = await response.blob();
+      console.log(`handleDownloadExistingImage: Received blob of size ${blob.size} and type ${blob.type}`);
+      
       const url = window.URL.createObjectURL(blob);
 
       const link = document.createElement("a");
@@ -605,6 +621,7 @@ export function AiModalPop({
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
+      console.log("handleDownloadExistingImage: Download triggered successfully");
       toast.success("Download started!");
     } catch (error) {
       console.error("handleDownloadExistingImage: Error during download process:", error);

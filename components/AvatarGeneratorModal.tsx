@@ -98,6 +98,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   const [previewType, setPreviewType] = useState<GenerationType>("superhero");
   const [generationType, setGenerationType] = useState<GenerationType>("superhero");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [isGenerated, setIsGenerated] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string>("");
@@ -279,6 +280,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     };
 
     const keys = [
+      "download_url",
       "signed_image_url",
       "final_image_url",
       "generated_image_url",
@@ -656,27 +658,49 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     }
 
     if (!imageUrl) {
-      console.warn("handleDownload: No imageUrl available for download");
+      console.error("handleDownload: No generated image URL available");
       toast.error("Image not ready for download yet.");
       return;
     }
 
+    console.log("handleDownload: Starting download for:", imageUrl);
+    setIsDownloading(true);
+    
     try {
-      // Use proxy to fetch image to bypass CORS and force download
-      const filename = `avatar-${formData.name || "user"}.png`;
-      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl)}&filename=${encodeURIComponent(filename)}&disposition=attachment`;
-      console.log("handleDownload: Using proxy URL:", proxyUrl);
+      const filename = `scaleup-avatar-${registrationData?.user_id || "user"}.png`;
       
+      // If the URL is already a proxy URL, extract the original URL
+      let targetUrl = imageUrl;
+      if (targetUrl.includes("/api/proxy-image?url=")) {
+        const urlParams = new URLSearchParams(targetUrl.split("?")[1]);
+        const extracted = urlParams.get("url");
+        if (extracted) {
+          console.log("handleDownload: Extracted target URL from proxy:", extracted);
+          targetUrl = extracted;
+        }
+      }
+
+      // Safety check: if targetUrl looks like a ticket, warn
+      const isTicket = targetUrl.toLowerCase().includes("-ticket") || targetUrl.toLowerCase().includes("makemypass.com");
+      if (isTicket) {
+        console.warn("handleDownload: WARNING - Target URL looks like a ticket!", targetUrl);
+      }
+
+      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(
+        targetUrl
+      )}&filename=${encodeURIComponent(filename)}&disposition=attachment`;
+
+      console.log("handleDownload: Fetching via proxy:", proxyUrl);
       const response = await fetch(proxyUrl);
       if (!response.ok) {
-        console.error("handleDownload: Proxy response not OK:", response.status);
-        throw new Error("Failed to fetch image via proxy");
+        throw new Error(`Failed to fetch image (Status: ${response.status})`);
       }
-      
+
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      console.log("handleDownload: Created blob URL:", url);
+      console.log(`handleDownload: Received blob of size ${blob.size} and type ${blob.type}`);
       
+      const url = window.URL.createObjectURL(blob);
+
       const link = document.createElement("a");
       link.href = url;
       link.download = filename;
@@ -684,10 +708,14 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
+      console.log("handleDownload: Download triggered successfully");
+      toast.success("Download started!");
     } catch (error) {
       console.error("handleDownload: Error during download process:", error);
-      toast.error("Download failed. Opening in new tab instead.");
+      toast.error("Download failed. Opening in new tab.");
       window.open(imageUrl, "_blank", "noopener,noreferrer");
+    } finally {
+      setIsDownloading(false);
     }
   };
 
