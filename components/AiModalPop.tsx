@@ -124,18 +124,21 @@ export function AiModalPop({
     );
     
     if (priority.length > 0) {
-      console.log("Found prioritized image URL:", priority[0]);
+      console.log("AiModalPop: Found prioritized image URL:", priority[0]);
       return priority[0];
     }
 
-    // Avoid original uploads if possible
-    const filtered = candidates.filter(url => !url.toLowerCase().includes("/uploads/"));
+    // Avoid original uploads and tickets if possible
+    const filtered = candidates.filter(url => 
+      !url.toLowerCase().includes("/uploads/") && 
+      !url.toLowerCase().includes("-ticket")
+    );
     if (filtered.length > 0) {
-      console.log("Found filtered image URL (non-upload):", filtered[0]);
+      console.log("AiModalPop: Found filtered image URL (non-upload, non-ticket):", filtered[0]);
       return filtered[0];
     }
 
-    console.log("Falling back to first candidate image URL:", candidates[0]);
+    console.log("AiModalPop: Falling back to first candidate image URL:", candidates[0]);
     return candidates[0];
   };
 
@@ -779,7 +782,7 @@ export function AiModalPop({
             <div className="w-full max-h-[50vh] sm:max-h-[60vh] overflow-hidden rounded-2xl sm:rounded-3xl border border-zinc-200 bg-zinc-50 flex items-center justify-center min-h-[200px]">
               {existingImageUrl ? (
                 <img
-                  src={`/api/proxy-image?url=${encodeURIComponent(existingImageUrl)}&disposition=inline`}
+                  src={existingImageUrl}
                   alt="Generated avatar"
                   className="w-full h-auto max-h-[50vh] sm:max-h-[60vh] object-contain"
                   onLoad={() => console.log("Existing image loaded successfully")}

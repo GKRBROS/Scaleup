@@ -1055,7 +1055,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                       <img
                         src={
                           isGenerated
-                            ? `/api/proxy-image?url=${encodeURIComponent(generatedImageUrl)}&disposition=inline`
+                            ? generatedImageUrl
                             : activeOption.previewImg
                         }
                         alt="Avatar preview"

@@ -33,26 +33,13 @@ POST /api/generate
 | Parameter      | Type   | Required | Description                                                         |
 | -------------- | ------ | -------- | ------------------------------------------------------------------- |
 | `name`         | string | ✅       | User's full name (cannot be empty)                                  |
-| `edit_name`    | string | ❌       | Alternative/edited name for display                                 |
 | `email`        | string | ✅       | Valid email address (regex validated)                               |
 | `phone_no`     | string | ✅       | Phone number (10-15 digits, with optional + prefix)                 |
 | `district`     | string | ✅       | District/region name (cannot be empty)                              |
-| `category`     | string | ✅       | User category (must be one of the 6 options below)                  |
+| `category`     | string | ✅       | User category (e.g., Students, Business Owners, etc.)               |
 | `organization` | string | ✅       | Organization/company name (cannot be empty)                         |
 | `prompt_type`  | string | ✅       | Avatar style type (must be one of: `prompt1`, `prompt2`, `prompt3`) |
 | `photo`        | File   | ✅       | User's photo for avatar generation                                  |
-
-### Category Options
-
-The `category` field must be one of these values:
-
-- `Startups`
-- `Working Professionals`
-- `Students`
-- `Business Owners`
-- `NRI / Gulf Retunees`
-- `Government Officials`
-- `Other`
 
 ### Avatar Style Types
 
@@ -72,14 +59,13 @@ The `prompt_type` field defines which AI prompt is used:
 
 - `image/jpeg` (JPEG/JPG)
 - `image/png` (PNG)
-- `image/webp` (WebP)
 
 **Validation Error** (400):
 
 ```json
 {
   "error": "Invalid image format",
-  "details": "Only JPEG, PNG, and WebP formats are allowed. Received: image/gif"
+  "details": "Only JPEG/JPG and PNG formats are allowed. Received: image/gif"
 }
 ```
 
@@ -214,11 +200,26 @@ GET /api/user/[userId]
 
 ### URL Parameters
 
-| Parameter | Type | Required | Description                             |
-| --------- | ---- | -------- | --------------------------------------- |
-| `userId`  | UUID | ✅       | The UUID of the generated avatar record |
+| Parameter | Type   | Required | Description                                                                 |
+| --------- | ------ | -------- | --------------------------------------------------------------------------- |
+| `userId`  | string | ✅       | **Preferred: User's Phone Number** (e.g., `+919876543210`) or Record UUID. |
 
-### Example Request
+> **Note**: Using the phone number for polling is the most reliable method as it ensures you always get the latest generation for that specific user, even if session IDs (UUIDs) are lost or stale.
+
+### Query Parameters
+
+| Parameter   | Type   | Required | Description                                            |
+| ----------- | ------ | -------- | ------------------------------------------------------ |
+| `dial_code` | string | ❌       | Optional dial code (e.g., `+91`) if `userId` is phone. |
+
+### Example Request (Polling by Phone)
+
+```bash
+# Recommended method
+curl -X GET "http://localhost:3000/scaleup2026/user/+919876543210"
+```
+
+### Example Request (Polling by UUID)
 
 ```bash
 curl -X GET "http://localhost:3000/scaleup2026/user/550e8400-e29b-41d4-a716-446655440000"
@@ -277,7 +278,6 @@ curl -X GET "http://localhost:3000/scaleup2026/user/550e8400-e29b-41d4-a716-4466
 | --------------------- | --------- | ------------- | --------------------------------- |
 | `id`                  | UUID      | PRIMARY KEY   | Auto-generated                    |
 | `name`                | TEXT      | NOT NULL      | User's full name                  |
-| `edit_name`           | TEXT      | Nullable      | Alternative name                  |
 | `email`               | TEXT      | NOT NULL      | Valid email format                |
 | `phone_no`            | TEXT      | NOT NULL      | 10-15 digits with optional +      |
 | `district`            | TEXT      | NOT NULL      | User's district/region            |
@@ -300,7 +300,7 @@ curl -X GET "http://localhost:3000/scaleup2026/user/550e8400-e29b-41d4-a716-4466
 1. User uploads photo
    ↓
 2. Validation
-   ├─ Format check (JPEG/PNG/WebP only)
+  ├─ Format check (JPEG/JPG/PNG only)
    └─ Size check (≤ 2MB)
    ↓
 3. AI Processing
@@ -357,7 +357,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
 | Error                            | Cause                     | Solution                                |
 | -------------------------------- | ------------------------- | --------------------------------------- |
-| `Invalid image format`           | Wrong file type uploaded  | Use JPEG, PNG, or WebP format           |
+| `Invalid image format`           | Wrong file type uploaded  | Use JPEG/JPG or PNG format              |
 | `Image file too large`           | File exceeds 2MB          | Compress image before uploading         |
 | `Valid email is required`        | Email doesn't match regex | Ensure email format: user@domain.com    |
 | `Valid phone number is required` | Phone has invalid digits  | Use 10-15 digits with optional + prefix |
@@ -397,13 +397,15 @@ form.append("photo" /* file blob */);
 
 1. **Final Image URL**: The `generated_image_url` (returned as `final_image_url`) is the COMPLETE avatar after all processing, merging, and styling applied.
 
-2. **File Validation**: Only JPEG, PNG, and WebP formats are accepted. No dimension validation is applied—the system handles images of any size.
+2. **File Validation**: Only JPEG/JPG and PNG formats are accepted. No dimension validation is applied—the system handles images of any size.
 
-3. **UUID Format**: Always validate UUID format in GET requests. Must be standard UUID v4 format.
+3. **Name Edits in Modal**: The API always stores the current `name` value from the form. Any edits in the modal or registration form replace the previous name up until the user exits the modal or submits the registration.
 
-4. **Supabase Storage**: Final images are publicly accessible via the returned URL. Ensure bucket permissions are set to PUBLIC.
+4. **UUID Format**: Always validate UUID format in GET requests. Must be standard UUID v4 format.
 
-5. **Error Details**: In production, error details are hidden for security. In development mode, full stack traces are provided.
+5. **Supabase Storage**: Final images are publicly accessible via the returned URL. Ensure bucket permissions are set to PUBLIC.
+
+6. **Error Details**: In production, error details are hidden for security. In development mode, full stack traces are provided.
 
 ---
 
