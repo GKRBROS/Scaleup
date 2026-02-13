@@ -115,13 +115,17 @@ export function AiModalPop({
       return "";
     }
 
-    // Prioritize generated/final images
-    const priority = candidates.filter(url => 
-      url.toLowerCase().includes("/final/") || 
-      url.toLowerCase().includes("/generated/") || 
-      url.toLowerCase().includes("merged") || 
-      url.toLowerCase().includes("avatar")
-    );
+    // Prioritize generated/final images, but EXCLUDE tickets even from priority
+    const priority = candidates.filter(url => {
+      const lowUrl = url.toLowerCase();
+      const isTicket = lowUrl.includes("-ticket") || lowUrl.includes("makemypass.com");
+      return !isTicket && (
+        lowUrl.includes("/final/") || 
+        lowUrl.includes("/generated/") || 
+        lowUrl.includes("merged") || 
+        lowUrl.includes("avatar")
+      );
+    });
     
     if (priority.length > 0) {
       console.log("AiModalPop: Found prioritized image URL:", priority[0]);
@@ -129,10 +133,12 @@ export function AiModalPop({
     }
 
     // Avoid original uploads and tickets if possible
-    const filtered = candidates.filter(url => 
-      !url.toLowerCase().includes("/uploads/") && 
-      !url.toLowerCase().includes("-ticket")
-    );
+    const filtered = candidates.filter(url => {
+      const lowUrl = url.toLowerCase();
+      return !lowUrl.includes("/uploads/") && 
+             !lowUrl.includes("-ticket") && 
+             !lowUrl.includes("makemypass.com");
+    });
     if (filtered.length > 0) {
       console.log("AiModalPop: Found filtered image URL (non-upload, non-ticket):", filtered[0]);
       return filtered[0];
