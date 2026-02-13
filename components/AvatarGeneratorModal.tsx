@@ -530,17 +530,24 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
           setIsGenerating(false);
           
           // After successful generation, send email with the image
-          if (formData.email) {
-            fetch("/api/send-mail", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                to: formData.email,
-                subject: "Your ScaleUp Conclave 2026 Avatar is Ready!",
-                finalImageUrl: absoluteUrl,
-              }),
-            });
-          }
+        if (formData.email) {
+          console.log("AvatarGeneratorModal: Triggering email send to:", formData.email);
+          fetch("/api/send-mail", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              to: formData.email,
+              subject: "Your ScaleUp Conclave 2026 Avatar is Ready!",
+              finalImageUrl: absoluteUrl,
+            }),
+          }).then(res => {
+            if (!res.ok) {
+              res.json().then(data => console.error("AvatarGeneratorModal: Email send failed:", data));
+            } else {
+              console.log("AvatarGeneratorModal: Email send request successful");
+            }
+          }).catch(err => console.error("AvatarGeneratorModal: Email fetch error:", err));
+        }
 
           // After successful generation, update the DB with final image info if user_id is present
           if (result.user_id) {
@@ -574,6 +581,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
           
           // After successful polling, send email with the image
           if (formData.email) {
+            console.log("AvatarGeneratorModal: Triggering email send (after polling) to:", formData.email);
             fetch("/api/send-mail", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -582,7 +590,13 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                 subject: "Your ScaleUp Conclave 2026 Avatar is Ready!",
                 finalImageUrl: imageUrl,
               }),
-            });
+            }).then(res => {
+              if (!res.ok) {
+                res.json().then(data => console.error("AvatarGeneratorModal: Email send failed (after polling):", data));
+              } else {
+                console.log("AvatarGeneratorModal: Email send request successful (after polling)");
+              }
+            }).catch(err => console.error("AvatarGeneratorModal: Email fetch error (after polling):", err));
           }
 
           // Also update DB after polling success
