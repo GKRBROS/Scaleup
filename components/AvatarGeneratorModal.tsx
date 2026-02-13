@@ -324,10 +324,13 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       return priority[0];
     }
 
-    // Avoid original uploads if possible
-    const filtered = candidates.filter(url => !url.toLowerCase().includes("/uploads/"));
+    // Avoid original uploads and tickets if possible
+    const filtered = candidates.filter(url => 
+      !url.toLowerCase().includes("/uploads/") && 
+      !url.toLowerCase().includes("-ticket")
+    );
     if (filtered.length > 0) {
-      console.log("AvatarGeneratorModal: Found filtered image URL (non-upload):", filtered[0]);
+      console.log("AvatarGeneratorModal: Found filtered image URL (non-upload, non-ticket):", filtered[0]);
       return filtered[0];
     }
 
