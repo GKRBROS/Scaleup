@@ -686,8 +686,18 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         console.warn("handleDownload: WARNING - Target URL looks like a ticket!", targetUrl);
       }
 
+      // Add a cache buster to the target URL ONLY IF it's not a presigned S3 URL
+      // Presigned URLs already have a unique signature that shouldn't be tampered with,
+      // and they are inherently unique/short-lived.
+      let urlForProxy = targetUrl;
+      if (!targetUrl.includes("X-Amz-Signature")) {
+        urlForProxy = targetUrl.includes("?") 
+          ? `${targetUrl}&t=${Date.now()}` 
+          : `${targetUrl}?t=${Date.now()}`;
+      }
+
       const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(
-        targetUrl
+        urlForProxy
       )}&filename=${encodeURIComponent(filename)}&disposition=attachment`;
 
       console.log("handleDownload: Fetching via proxy:", proxyUrl);

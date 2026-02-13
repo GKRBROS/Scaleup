@@ -140,7 +140,10 @@ export async function GET(req: NextRequest) {
     const responseHeaders = new Headers();
     responseHeaders.set("Content-Type", contentType);
     responseHeaders.set("Content-Disposition", `${disposition}; filename="${filename}"`);
-    responseHeaders.set("Cache-Control", "public, max-age=3600");
+    // Disable caching to prevent cross-user image contamination and ensure fresh S3 content
+    responseHeaders.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    responseHeaders.set("Pragma", "no-cache");
+    responseHeaders.set("Expires", "0");
     // Always use the actual buffer length to avoid mismatches if the source was compressed
     responseHeaders.set("Content-Length", buffer.byteLength.toString());
 

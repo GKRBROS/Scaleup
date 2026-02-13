@@ -340,7 +340,7 @@ export function AiModalPop({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             email: mail,
-            phone_no: "0000000000",
+            phone_no: avatarRegistrationData?.phone_no || "0000000000",
           }),
         });
 
@@ -407,17 +407,17 @@ export function AiModalPop({
     setLoading(true);
     try {
       const response = await fetch(
-        "https://scaleup.frameforge.one/scaleup2026/otp/verify",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: mail,
-            phone_no: "0000000000",
-            otp,
-          }),
-        },
-      );
+          "https://scaleup.frameforge.one/scaleup2026/otp/verify",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: mail,
+              phone_no: avatarRegistrationData?.phone_no || "0000000000",
+              otp,
+            }),
+          },
+        );
 
       const responseData = await response.json().catch(() => ({}));
       console.log("OTP Verification Full Response:", JSON.stringify(responseData, null, 2));
@@ -558,6 +558,7 @@ export function AiModalPop({
     setOtpSent(false);
     setTimeLeft(600);
     setShouldOpenAvatarAfterOtp(false);
+    setExistingImageUrl(""); // Clear existing image URL on reset
   };
 
   const handleClosePhoneModal = () => {
@@ -599,8 +600,13 @@ export function AiModalPop({
         console.warn("handleDownloadExistingImage: WARNING - Target URL looks like a ticket!", targetUrl);
       }
 
+      // Add a cache buster to the target URL to ensure we get the latest version from S3
+      const urlWithBuster = targetUrl.includes("?") 
+        ? `${targetUrl}&t=${Date.now()}` 
+        : `${targetUrl}?t=${Date.now()}`;
+
       const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(
-        targetUrl
+        urlWithBuster
       )}&filename=${encodeURIComponent(filename)}&disposition=attachment`;
 
       console.log("handleDownloadExistingImage: Fetching via proxy:", proxyUrl);
