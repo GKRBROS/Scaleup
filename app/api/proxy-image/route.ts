@@ -144,6 +144,20 @@ export async function GET(req: NextRequest) {
     // Always use the actual buffer length to avoid mismatches if the source was compressed
     responseHeaders.set("Content-Length", buffer.byteLength.toString());
 
+    // CRITICAL: Safety check for cross-contamination
+    // If filename suggests avatar but URL looks like ticket, or vice versa, log it
+    const lowUrl = url.toLowerCase();
+    const lowFile = filename.toLowerCase();
+    const isTicketUrl = lowUrl.includes("makemypass") || lowUrl.includes("-ticket");
+    const isAvatarFile = lowFile.includes("avatar");
+    const isTicketFile = lowFile.includes("ticket");
+
+    if (isTicketUrl && isAvatarFile) {
+      console.warn(`Proxy-image: POTENTIAL MISMATCH - Ticket URL being downloaded as Avatar file: ${filename}`);
+    } else if (!isTicketUrl && isTicketFile) {
+      console.warn(`Proxy-image: POTENTIAL MISMATCH - Avatar URL being downloaded as Ticket file: ${filename}`);
+    }
+
     return new Response(buffer, {
       status: 200,
       headers: responseHeaders,

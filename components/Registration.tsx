@@ -915,6 +915,43 @@ function SuccessModal({
   const [ticketImageUrl, setTicketImageUrl] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
+  // CRITICAL: Ensure we don't accidentally pick up an avatar URL from the user's data
+  const extractTicketOnlyUrl = (data: any): string => {
+    if (!data) return "";
+    
+    // Explicitly check known ticket fields from MakeMyPass first
+    const ticketCandidates = [
+      data?.response?.image,
+      data?.image,
+      data?.image_url,
+      data?.ticket_url,
+      data?.download_url
+    ];
+
+    for (const url of ticketCandidates) {
+      if (typeof url === "string" && url.trim()) {
+        const lowUrl = url.toLowerCase();
+        // Tickets from MakeMyPass usually have 'makemypass' or '-ticket' in them
+        // Avatars from FrameForge usually have 'frameforge' or '/final/' or '/generated/' in them
+        if (lowUrl.includes("makemypass") || lowUrl.includes("-ticket")) {
+          return url.trim();
+        }
+      }
+    }
+
+    // Fallback: if we find any URL that is NOT a FrameForge avatar, it's likely the ticket
+    for (const url of ticketCandidates) {
+       if (typeof url === "string" && url.trim()) {
+         const lowUrl = url.toLowerCase();
+         if (!lowUrl.includes("frameforge") && !lowUrl.includes("/final/") && !lowUrl.includes("/generated/")) {
+           return url.trim();
+         }
+       }
+    }
+
+    return "";
+  };
+
   useEffect(() => {
     const fetchTicketData = async () => {
       try {
@@ -930,26 +967,27 @@ function SuccessModal({
 
         if (response.ok) {
           const data = await response.json();
-          console.log("Ticket data fetched:", data);
+          console.log("SuccessModal: Ticket data fetched:", data);
           setGuestData(data);
 
-          const imageUrl =
-            data?.response?.image ||
-            data?.image ||
-            data?.image_url ||
-            data?.ticket_url;
+          const imageUrl = extractTicketOnlyUrl(data);
 
           if (imageUrl) {
-            console.log("Ticket image URL:", imageUrl);
+            console.log("SuccessModal: Validated Ticket image URL:", imageUrl);
             setTicketImageUrl(imageUrl);
           } else {
-            console.error("No image URL found in response:", data);
+            console.error("SuccessModal: No valid TICKET image URL found in response:", data);
+            // If no explicit ticket URL found, but we have a generic image, check it carefully
+            const genericImage = data?.image || data?.response?.image;
+            if (genericImage && !genericImage.toLowerCase().includes("frameforge")) {
+               setTicketImageUrl(genericImage);
+            }
           }
         } else {
-          console.error("Failed to fetch ticket data, status:", response.status);
+          console.error("SuccessModal: Failed to fetch ticket data, status:", response.status);
         }
       } catch (error) {
-        console.error("Error fetching ticket data:", error);
+        console.error("SuccessModal: Error fetching ticket data:", error);
       } finally {
         setLoading(false);
       }
