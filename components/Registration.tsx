@@ -668,7 +668,7 @@ function RegistrationForm({
             <option value="Business Owners" className="text-gray-900">Business Owners</option>
             <option value="NRI / Gulf Retunees" className="text-gray-900">NRI / Gulf Retunees</option>
             <option value="Government Officials" className="text-gray-900">Government Officials</option>
-            <option value="Other" className="text-gray-900">Other</option>
+            <option value="Others" className="text-gray-900">Others</option>
           </select>
         </div>
 
