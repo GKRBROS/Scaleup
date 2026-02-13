@@ -637,7 +637,7 @@ function RegistrationForm({
               "Wayanad",
               "Kannur",
               "Kasaragod",
-              "Other",
+              "Outside Kerala",
             ].map((d) => (
               <option key={d} value={d} className="text-gray-900">
                 {d}
