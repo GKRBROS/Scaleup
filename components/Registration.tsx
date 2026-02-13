@@ -916,7 +916,7 @@ function SuccessModal({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchGuestData = async () => {
+    const fetchTicketData = async () => {
       try {
         const response = await fetch(
           `https://api.makemypass.com/makemypass/manage-guest/f9290cc6-d840-4492-aefb-76f189df5f5e/guest/${ticketID}/download-ticket/`,
@@ -930,57 +930,33 @@ function SuccessModal({
 
         if (response.ok) {
           const data = await response.json();
-          console.log("Guest data:", data);
+          console.log("Ticket data fetched:", data);
           setGuestData(data);
-        } else {
-          console.error("Failed to fetch guest data");
-        }
-      } catch (error) {
-        console.error("Error fetching guest data:", error);
-      }
-    };
-
-    const fetchTicketImage = async () => {
-      try {
-        const ticketResponse = await fetch(
-          `https://api.makemypass.com/makemypass/manage-guest/f9290cc6-d840-4492-aefb-76f189df5f5e/guest/${ticketID}/download-ticket/`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (ticketResponse.ok) {
-          const ticketData = await ticketResponse.json();
-          console.log("Ticket download response:", ticketData);
 
           const imageUrl =
-            ticketData?.response?.image ||
-            ticketData?.image ||
-            ticketData?.image_url ||
-            ticketData?.ticket_url;
+            data?.response?.image ||
+            data?.image ||
+            data?.image_url ||
+            data?.ticket_url;
 
           if (imageUrl) {
             console.log("Ticket image URL:", imageUrl);
             setTicketImageUrl(imageUrl);
           } else {
-            console.error("No image URL found in response:", ticketData);
+            console.error("No image URL found in response:", data);
           }
         } else {
-          console.error("Failed to fetch ticket image, status:", ticketResponse.status);
+          console.error("Failed to fetch ticket data, status:", response.status);
         }
       } catch (error) {
-        console.error("Error fetching ticket image:", error);
+        console.error("Error fetching ticket data:", error);
       } finally {
         setLoading(false);
       }
     };
 
     if (ticketID) {
-      fetchGuestData();
-      fetchTicketImage();
+      fetchTicketData();
     }
   }, [ticketID]);
 

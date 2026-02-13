@@ -101,10 +101,19 @@ export async function GET(req: NextRequest) {
       console.log("Proxy-image: Non-Amazon URL detected, bypassing conversion and passing through directly");
     }
 
+    if (!url.startsWith("http")) {
+      if (url.startsWith("//")) {
+        url = "https:" + url;
+      } else {
+        console.error("Proxy-image: Invalid URL protocol:", url);
+        return NextResponse.json({ error: "Invalid URL protocol" }, { status: 400 });
+      }
+    }
+
     console.log("Proxy-image: Final fetch target URL:", url);
 
     const response = await fetch(url, {
-      method: req.method, // Pass through the method (GET or HEAD)
+      method: "GET", // Force GET for the actual fetch to ensure we get the data
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
@@ -120,25 +129,21 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // If it was a HEAD request, return early
-    if (req.method === 'HEAD') {
-      return new NextResponse(null, {
-        status: 200,
-        headers: {
-          "Content-Type": response.headers.get("content-type") || "image/png",
-        },
-      });
-    }
-
-    const contentType = response.headers.get("content-type") || "application/octet-stream";
+    const contentType = response.headers.get("content-type") || "image/png";
     const buffer = await response.arrayBuffer();
 
-    return new NextResponse(buffer, {
-      headers: {
-        "Content-Type": contentType,
-        "Content-Disposition": `${disposition}; filename="${filename}"`,
-        "Cache-Control": "public, max-age=3600",
-      },
+    console.log(`Proxy-image: Successfully fetched ${buffer.byteLength} bytes, content-type: ${contentType}`);
+
+    const responseHeaders = new Headers();
+    responseHeaders.set("Content-Type", contentType);
+    responseHeaders.set("Content-Disposition", `${disposition}; filename="${filename}"`);
+    responseHeaders.set("Cache-Control", "public, max-age=3600");
+    // Always use the actual buffer length to avoid mismatches if the source was compressed
+    responseHeaders.set("Content-Length", buffer.byteLength.toString());
+
+    return new Response(buffer, {
+      status: 200,
+      headers: responseHeaders,
     });
   } catch (error) {
     console.error("Proxy error:", error);

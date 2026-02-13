@@ -368,8 +368,12 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       return;
     }
 
-    setIsGenerating(true);
+    // Capture the current image as "old" before starting a new generation
+    // This handles both re-generation by the same user and sequential users
     const oldImageUrl = generatedImageUrl;
+    console.log("AvatarGeneratorModal: Starting generation, tracking old image for exclusion:", oldImageUrl);
+
+    setIsGenerating(true);
     setGeneratedImageUrl("");
     setIsGenerated(false);
     
@@ -386,12 +390,13 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         try {
           // Add dial_code to query params as required by backend for phone number IDs
           const url = new URL(`https://scaleup.frameforge.one/scaleup2026/user/${userId}`);
+          // Cache busting for polling
           url.searchParams.append("t", Date.now().toString());
           if (formData.dialCode) {
             url.searchParams.append("dial_code", formData.dialCode);
           }
 
-          const response = await fetch(url.toString());
+          const response = await fetch(url.toString(), { cache: 'no-store' });
           
           // 202 Accepted means still processing - we should continue polling
           if (response.status === 202) {
@@ -421,8 +426,11 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
           const finalUrl = extractFinalImageUrl(result);
           if (finalUrl) {
             const absoluteUrl = getAbsoluteUrl(finalUrl);
-            // If the URL is exactly the same as the old one, it's likely stale data
-            if (currentOldUrl && absoluteUrl === currentOldUrl) {
+            // Add cache buster to the final image URL itself to bypass browser image cache
+            const imageWithBuster = `${absoluteUrl}${absoluteUrl.includes('?') ? '&' : '?'}v=${Date.now()}`;
+            
+            // If the URL (without buster) is exactly the same as the old one, it's likely stale data
+            if (currentOldUrl && absoluteUrl === currentOldUrl.split('?')[0]) {
               if (attempt % 5 === 0) {
                 console.log(`Polling attempt ${attempt + 1}: Found old image URL, still waiting for new one...`);
               }
@@ -430,7 +438,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
               continue;
             }
             console.log(`Polling successful on attempt ${attempt + 1}! Found new image:`, absoluteUrl);
-            return absoluteUrl;
+            return imageWithBuster;
           }
           
           if (attempt % 5 === 0) {
@@ -509,10 +517,12 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       // Even if an image is returned in initial response, if it's the same as old one, we must poll
       if (finalImageUrl) {
         const absoluteUrl = getAbsoluteUrl(finalImageUrl);
+        const imageWithBuster = `${absoluteUrl}${absoluteUrl.includes('?') ? '&' : '?'}v=${Date.now()}`;
         
-        if (!oldImageUrl || absoluteUrl !== oldImageUrl) {
+        // Use .split('?')[0] to compare URLs without cache busters
+        if (!oldImageUrl || absoluteUrl !== oldImageUrl.split('?')[0]) {
           console.log("Found NEW image in initial response, skipping polling");
-          setGeneratedImageUrl(absoluteUrl);
+          setGeneratedImageUrl(imageWithBuster);
           setIsGenerated(true);
           setIsGenerating(false);
           
