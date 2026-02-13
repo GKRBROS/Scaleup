@@ -392,7 +392,8 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
         try {
           // Add dial_code to query params as required by backend for phone number IDs
-          const url = new URL(`https://scaleup.frameforge.one/scaleup2026/user/${userId}`);
+          // Use encodeURIComponent for userId as it might contain '+' or other special chars
+          const url = new URL(`https://scaleup.frameforge.one/scaleup2026/user/${encodeURIComponent(userId)}`);
           // Cache busting for polling
           url.searchParams.append("t", Date.now().toString());
           if (formData.dialCode) {
@@ -480,12 +481,28 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
       let response;
       try {
+        console.log("Sending generation request to backend...");
         response = await fetch("https://scaleup.frameforge.one/scaleup2026/generate", {
           method: "POST",
           body: apiFormData,
         });
       } catch (fetchError) {
-        console.error("Network error:", fetchError);
+        console.error("Network error during initial POST:", fetchError);
+        
+        // Robust fallback: if POST fails with a network error, it might still have reached the server!
+        // We attempt to poll anyway using the userId we already have.
+        const fallbackUserId = formData.userId || formData.phone_no;
+        if (fallbackUserId) {
+          console.log(`Attempting fallback polling for ${fallbackUserId} after network error...`);
+          const imageUrl = await fetchGeneratedImageUrl(fallbackUserId, oldImageUrl);
+          if (imageUrl) {
+            setGeneratedImageUrl(imageUrl);
+            setIsGenerated(true);
+            setIsGenerating(false);
+            return;
+          }
+        }
+        
         toast.error("Network error. Please check your connection and try again.");
         setIsGenerating(false);
         return;
@@ -495,6 +512,20 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
       if (!response.ok) {
         console.error("API returned error status:", response.status);
+        
+        // Even on server error, if we have a userId, try polling as a last resort
+        const fallbackUserId = formData.userId || formData.phone_no;
+        if (fallbackUserId) {
+          console.log(`API error ${response.status}, but attempting to poll anyway for ${fallbackUserId}...`);
+          const imageUrl = await fetchGeneratedImageUrl(fallbackUserId, oldImageUrl);
+          if (imageUrl) {
+            setGeneratedImageUrl(imageUrl);
+            setIsGenerated(true);
+            setIsGenerating(false);
+            return;
+          }
+        }
+        
         toast.error(`Server error (${response.status}). Please try again.`);
         setIsGenerating(false);
         return;
@@ -540,7 +571,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
           if (result.user_id) {
             const userId = result.user_id;
             try {
-              await fetch(`https://scaleup.frameforge.one/scaleup2026/user/${userId}`, {
+              await fetch(`https://scaleup.frameforge.one/scaleup2026/user/${encodeURIComponent(userId)}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -568,7 +599,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
           
           // Also update DB after polling success
           try {
-            await fetch(`https://scaleup.frameforge.one/scaleup2026/user/${pollUserId}`, {
+            await fetch(`https://scaleup.frameforge.one/scaleup2026/user/${encodeURIComponent(pollUserId)}`, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -601,7 +632,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     if (!imageUrl && generatedUserId) {
       console.log("handleDownload: No imageUrl, fetching by userId:", generatedUserId);
       try {
-        const response = await fetch(`https://scaleup.frameforge.one/scaleup2026/user/${generatedUserId}`);
+        const response = await fetch(`https://scaleup.frameforge.one/scaleup2026/user/${encodeURIComponent(generatedUserId)}`);
         const text = await response.text();
         const result = text ? JSON.parse(text) : {};
         const fetchedUrl = extractFinalImageUrl(result);
