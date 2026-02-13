@@ -430,7 +430,11 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
           if (finalUrl) {
             const absoluteUrl = getAbsoluteUrl(finalUrl);
             // Add cache buster to the final image URL itself to bypass browser image cache
-            const imageWithBuster = `${absoluteUrl}${absoluteUrl.includes('?') ? '&' : '?'}v=${Date.now()}`;
+            // IMPORTANT: Do not add cache buster if it's a presigned S3 URL (contains X-Amz-Signature)
+            // as it will invalidate the AWS signature and cause a 403 error.
+            const imageWithBuster = absoluteUrl.includes('X-Amz-Signature')
+              ? absoluteUrl
+              : `${absoluteUrl}${absoluteUrl.includes('?') ? '&' : '?'}v=${Date.now()}`;
             
             // If the URL (without buster) is exactly the same as the old one, it's likely stale data
             if (currentOldUrl && absoluteUrl === currentOldUrl.split('?')[0]) {
@@ -520,7 +524,10 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       // Even if an image is returned in initial response, if it's the same as old one, we must poll
       if (finalImageUrl) {
         const absoluteUrl = getAbsoluteUrl(finalImageUrl);
-        const imageWithBuster = `${absoluteUrl}${absoluteUrl.includes('?') ? '&' : '?'}v=${Date.now()}`;
+        // Do not add cache buster if it's a presigned S3 URL
+        const imageWithBuster = absoluteUrl.includes('X-Amz-Signature')
+          ? absoluteUrl
+          : `${absoluteUrl}${absoluteUrl.includes('?') ? '&' : '?'}v=${Date.now()}`;
         
         // Use .split('?')[0] to compare URLs without cache busters
         if (!oldImageUrl || absoluteUrl !== oldImageUrl.split('?')[0]) {
@@ -529,26 +536,6 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
           setIsGenerated(true);
           setIsGenerating(false);
           
-          // After successful generation, send email with the image
-        if (formData.email) {
-          console.log("AvatarGeneratorModal: Triggering email send to:", formData.email);
-          fetch("/api/send-mail", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              to: formData.email,
-              subject: "Your ScaleUp Conclave 2026 Avatar is Ready!",
-              finalImageUrl: absoluteUrl,
-            }),
-          }).then(res => {
-            if (!res.ok) {
-              res.json().then(data => console.error("AvatarGeneratorModal: Email send failed:", data));
-            } else {
-              console.log("AvatarGeneratorModal: Email send request successful");
-            }
-          }).catch(err => console.error("AvatarGeneratorModal: Email fetch error:", err));
-        }
-
           // After successful generation, update the DB with final image info if user_id is present
           if (result.user_id) {
             const userId = result.user_id;
@@ -579,26 +566,6 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
           setGeneratedImageUrl(imageUrl);
           setIsGenerated(true);
           
-          // After successful polling, send email with the image
-          if (formData.email) {
-            console.log("AvatarGeneratorModal: Triggering email send (after polling) to:", formData.email);
-            fetch("/api/send-mail", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                to: formData.email,
-                subject: "Your ScaleUp Conclave 2026 Avatar is Ready!",
-                finalImageUrl: imageUrl,
-              }),
-            }).then(res => {
-              if (!res.ok) {
-                res.json().then(data => console.error("AvatarGeneratorModal: Email send failed (after polling):", data));
-              } else {
-                console.log("AvatarGeneratorModal: Email send request successful (after polling)");
-              }
-            }).catch(err => console.error("AvatarGeneratorModal: Email fetch error (after polling):", err));
-          }
-
           // Also update DB after polling success
           try {
             await fetch(`https://scaleup.frameforge.one/scaleup2026/user/${pollUserId}`, {
