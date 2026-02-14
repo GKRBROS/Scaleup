@@ -706,24 +706,22 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         urlForProxy
       )}&filename=${encodeURIComponent(filename)}&disposition=attachment`;
 
-      console.log("handleDownload: Fetching via proxy:", proxyUrl);
-      const response = await fetch(proxyUrl);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch image (Status: ${response.status})`);
-      }
-
-      const blob = await response.blob();
-      console.log(`handleDownload: Received blob of size ${blob.size} and type ${blob.type}`);
+      console.log("handleDownload: Triggering download via hidden link:", proxyUrl);
       
-      const url = window.URL.createObjectURL(blob);
-
       const link = document.createElement("a");
-      link.href = url;
+      link.href = proxyUrl;
       link.download = filename;
+      link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      
+      // Give the browser a moment to process before removal
+      setTimeout(() => {
+        if (document.body.contains(link)) {
+          document.body.removeChild(link);
+        }
+      }, 100);
+
       console.log("handleDownload: Download triggered successfully");
       toast.success("Download started!");
     } catch (error) {
