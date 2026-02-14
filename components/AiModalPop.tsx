@@ -606,30 +606,37 @@ export function AiModalPop({
         console.warn("handleDownloadExistingImage: WARNING - Target URL looks like a ticket!", targetUrl);
       }
 
-      // Add a cache buster to the target URL to ensure we get the latest version from S3
-      const urlWithBuster = targetUrl.includes("?") 
-        ? `${targetUrl}&t=${Date.now()}` 
-        : `${targetUrl}?t=${Date.now()}`;
+      // Add a cache buster to the target URL ONLY IF it's not a presigned S3 URL
+      // Presigned URLs already have a unique signature that shouldn't be tampered with.
+      let urlForProxy = targetUrl;
+      if (!targetUrl.includes("X-Amz-Signature")) {
+        urlForProxy = targetUrl.includes("?") 
+          ? `${targetUrl}&t=${Date.now()}` 
+          : `${targetUrl}?t=${Date.now()}`;
+      }
 
       const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(
-        urlWithBuster
+        urlForProxy
       )}&filename=${encodeURIComponent(filename)}&disposition=attachment`;
 
-      console.log("handleDownloadExistingImage: Triggering download via hidden link:", proxyUrl);
+      console.log("handleDownloadExistingImage: Fetching via proxy:", proxyUrl);
+      const response = await fetch(proxyUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image via proxy (Status: ${response.status})`);
+      }
+
+      const blob = await response.blob();
+      console.log(`handleDownloadExistingImage: Received blob of size ${blob.size} and type ${blob.type}`);
       
+      const url = window.URL.createObjectURL(blob);
+
       const link = document.createElement("a");
-      link.href = proxyUrl;
+      link.href = url;
       link.download = filename;
-      link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
-      
-      // Give the browser a moment to process before removal
-      setTimeout(() => {
-        if (document.body.contains(link)) {
-          document.body.removeChild(link);
-        }
-      }, 100);
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
 
       console.log("handleDownloadExistingImage: Download triggered successfully");
       toast.success("Download started!");
