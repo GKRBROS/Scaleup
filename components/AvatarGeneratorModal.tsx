@@ -860,6 +860,10 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
               "relative w-full bg-white shadow-2xl overflow-y-auto flex flex-col-reverse md:flex-row",
               isMobile ? "min-h-screen" : "max-w-5xl max-h-[95vh] rounded-3xl md:overflow-hidden"
             )}
+            style={{
+              WebkitOverflowScrolling: "touch",
+              overscrollBehavior: "contain",
+            }}
           >
             {/* Close button - positioned differently for mobile */}
             {!isMobile && (
@@ -1042,7 +1046,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                 "relative flex-col bg-gray-900",
                 "flex w-full p-4 md:p-0 md:w-1/2 md:static md:z-auto",
                 "md:flex lg:p-6",
-                (isGenerating || isGenerated) && "absolute inset-0 z-[60] w-full h-full p-4 md:static md:z-auto"
+                (isGenerating || isGenerated) && !isMobile && "absolute inset-0 z-[60] w-full h-full p-4 md:static md:z-auto"
               )}
             >
               {/* Type Selection Tabs - Header */}
