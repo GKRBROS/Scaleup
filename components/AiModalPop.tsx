@@ -658,7 +658,7 @@ export function AiModalPop({
         <DialogContent 
           onPointerDownOutside={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
-          className="w-[95vw] sm:w-[90vw] md:w-[600px] lg:w-[700px] max-w-[700px] h-auto max-h-[90vh] md:h-[372px] p-0 overflow-hidden rounded-xl [&>button]:text-white"
+          className="z-[1000] w-[95vw] sm:w-[90vw] md:w-[600px] lg:w-[700px] max-w-[700px] h-auto max-h-[90vh] md:h-[372px] p-0 overflow-hidden rounded-xl [&>button]:text-white"
         >
           <VisuallyHidden>
             <DialogTitle>Email Verification</DialogTitle>
@@ -802,7 +802,7 @@ export function AiModalPop({
         <DialogContent
           onPointerDownOutside={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
-          className="fixed w-[95vw] sm:w-[90vw] md:w-[80vw] lg:w-[70vw] max-w-2xl rounded-xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
+          className="fixed z-[1000] w-[95vw] sm:w-[90vw] md:w-[80vw] lg:w-[70vw] max-w-2xl rounded-xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
           style={{
             backgroundColor: "#fff",
             color: "var(--neutral-50)",

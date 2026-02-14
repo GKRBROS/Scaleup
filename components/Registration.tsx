@@ -95,21 +95,44 @@ export default function RegistrationModal({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    if (name === "phone") {
+      const digits = value.replace(/\D/g, "");
+      setFormData((prev) => ({
+        ...prev,
+        phone: digits.slice(0, 15),
+      }));
+      return;
+    }
+    if (name === "countryCode") {
+      const cc = value.startsWith("+") ? value : `+${value.replace(/\D/g, "")}`;
+      setFormData((prev) => ({
+        ...prev,
+        countryCode: cc,
+      }));
+      return;
+    }
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Form submitted:", formData);
+    
+    // Client-side phone validation for better mobile UX
+    const cc = formData.countryCode.startsWith("+")
+      ? formData.countryCode
+      : `+${formData.countryCode.replace(/\D/g, "")}`;
+    const phoneDigits = formData.phone.replace(/\D/g, "");
+    if (phoneDigits.length < 7 || phoneDigits.length > 15) {
+      toast.error("Enter a valid phone number (7–15 digits).");
+      return;
+    }
 
     const url =
       "https://api.makemypass.com/makemypass/public-form/f9290cc6-d840-4492-aefb-76f189df5f5e/validate-rsvp/";
     const formData1 = new FormData();
     formData1.append("name", formData.name);
-    formData1.append("phone", formData.countryCode + formData.phone);
+    formData1.append("phone", cc + phoneDigits);
     formData1.append("email", formData.email);
     formData1.append("district", formData.district);
     formData1.append("organization", formData.organization);
@@ -185,7 +208,11 @@ export default function RegistrationModal({
       prefill: {
         name: formData.name,
         email: formData.email,
-        contact: formData.phone,
+        contact:
+          (formData.countryCode.startsWith("+")
+            ? formData.countryCode
+            : `+${formData.countryCode.replace(/\D/g, "")}`) +
+          formData.phone.replace(/\D/g, ""),
       },
       theme: {
         color: "#3399cc",

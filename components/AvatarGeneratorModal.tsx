@@ -117,6 +117,21 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+      try {
+        window.dispatchEvent(new CustomEvent("avatar-modal-opened"));
+      } catch {}
+    }
+    return () => {
+      document.body.style.overflow = "";
+      try {
+        window.dispatchEvent(new CustomEvent("avatar-modal-closed"));
+      } catch {}
+    };
+  }, [isOpen]);
+
   const [formData, setFormData] = useState({
     userId: registrationData?.user_id || "",
     name: registrationData?.name || "",
@@ -831,8 +846,8 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       {isOpen && (
         <motion.div
           className={cn(
-            "fixed inset-0 z-50 flex items-center justify-center p-4",
-            isMobile && "static inset-auto p-0"
+            "fixed inset-0 z-[1000] flex items-center justify-center p-4",
+            isMobile && "p-0"
           )}
           // onClick={!isMobile ? handleClose : undefined} // Removed to prevent closing on outside click
         >
@@ -1027,7 +1042,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                 "relative flex-col bg-gray-900",
                 "flex w-full p-4 md:p-0 md:w-1/2 md:static md:z-auto",
                 "md:flex lg:p-6",
-                (isGenerating || isGenerated) && "fixed inset-0 z-[999] w-full h-full p-4 md:static md:z-auto"
+                (isGenerating || isGenerated) && "absolute inset-0 z-[60] w-full h-full p-4 md:static md:z-auto"
               )}
             >
               {/* Type Selection Tabs - Header */}
