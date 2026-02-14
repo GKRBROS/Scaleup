@@ -116,24 +116,30 @@ export function AiModalPop({
       return "";
     }
 
-    // Prioritize generated/final images, but EXCLUDE tickets even from priority
-    const priority = candidates.filter(url => {
+    // --- TIERED PRIORITIZATION ---
+    // Tier 1: Final merged images (branded/framed) - HIGHEST PRIORITY
+    const tier1 = candidates.filter(url => {
       const lowUrl = url.toLowerCase();
       const isTicket = lowUrl.includes("-ticket") || lowUrl.includes("makemypass.com");
-      return !isTicket && (
-        lowUrl.includes("/final/") || 
-        lowUrl.includes("/generated/") || 
-        lowUrl.includes("merged") || 
-        lowUrl.includes("avatar")
-      );
+      return !isTicket && (lowUrl.includes("/final/") || lowUrl.includes("merged"));
     });
-    
-    if (priority.length > 0) {
-      console.log("AiModalPop: Found prioritized image URL:", priority[0]);
-      return priority[0];
+    if (tier1.length > 0) {
+      console.log("AiModalPop: Found Tier 1 (Final/Merged) image URL:", tier1[0]);
+      return tier1[0];
     }
 
-    // Avoid original uploads and tickets if possible
+    // Tier 2: Generated AI images (raw output)
+    const tier2 = candidates.filter(url => {
+      const lowUrl = url.toLowerCase();
+      const isTicket = lowUrl.includes("-ticket") || lowUrl.includes("makemypass.com");
+      return !isTicket && (lowUrl.includes("/generated/") || lowUrl.includes("avatar"));
+    });
+    if (tier2.length > 0) {
+      console.log("AiModalPop: Found Tier 2 (Generated/Avatar) image URL:", tier2[0]);
+      return tier2[0];
+    }
+
+    // Tier 3: Avoid original uploads and tickets if possible
     const filtered = candidates.filter(url => {
       const lowUrl = url.toLowerCase();
       return !lowUrl.includes("/uploads/") && 
@@ -141,7 +147,7 @@ export function AiModalPop({
              !lowUrl.includes("makemypass.com");
     });
     if (filtered.length > 0) {
-      console.log("AiModalPop: Found filtered image URL (non-upload, non-ticket):", filtered[0]);
+      console.log("AiModalPop: Found Tier 3 (Filtered) image URL:", filtered[0]);
       return filtered[0];
     }
 
