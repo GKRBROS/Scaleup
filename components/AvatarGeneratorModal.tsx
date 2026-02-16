@@ -877,296 +877,296 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
             exit={{ opacity: 0, scale: 0.95 }}
             onClick={(e) => e.stopPropagation()}
             className={cn(
-              "relative bg-white shadow-2xl flex flex-col-reverse md:flex-row",
+              "relative bg-white shadow-2xl flex flex-col",
               "w-[95%] md:w-full max-w-5xl max-h-[90vh]",
               "rounded-2xl md:rounded-3xl",
-              "overflow-y-auto md:overflow-hidden"
+              "overflow-hidden"
             )}
           >
-            {/* Close button - positioned differently for mobile */}
-            {!isMobile && (
-              <button
-                type="button"
-                onClick={handleClose}
-                className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition"
-              >
-                <X className="w-6 h-6 text-white" />
-              </button>
-            )}
-
-            {isMobile && (
-              <button
-                type="button"
-                onClick={handleClose}
-                className="absolute top-4 right-4 z-50 p-2 rounded-full bg-gray-900 text-white shadow-lg hover:bg-gray-800 transition"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            )}
-
-            {/* LEFT SIDE - Form */}
-            <div
-              className={cn(
-                "w-full lg:w-1/2 p-4 md:p-8 lg:p-12 bg-white transition-all duration-300 md:overflow-y-auto",
-                isGenerating && "pointer-events-none blur-sm lg:blur-0 lg:pointer-events-auto"
-              )}
+            {/* Close button - Always pinned to top-right of the modal frame */}
+            <button
+              type="button"
+              onClick={handleClose}
+              className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition md:bg-transparent md:hover:bg-white/10"
             >
-              <AnimatePresence mode="wait">
-                {!isGenerated ? (
-                  <motion.div
-                    key="form"
-                    initial={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <h1
-                      className="text-3xl lg:text-4xl font-normal text-gray-900 mb-2 md:mt-12"
-                      style={{ fontFamily: 'Calsans, sans-serif' }}
-                    >
-                      Generate your avatar
-                    </h1>
-                    <p className="text-sm text-gray-500 mb-6">
-                      To generate your avatar, upload a clear, well-lit, front-facing photo without filters. We only do one generation, and it can take about a minute.
-                    </p>
+              <X className="w-6 h-6 text-white" />
+            </button>
 
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-900 mb-1.5">
-                          Enter your name
-                        </label>
-                        <input
-                          name="name"
-                          value={formData.name}
-                          onChange={handleFormChange}
-                          placeholder="Enter your name"
-                          className="w-full h-11 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition"
-                        />
-                      </div>
+            {/* Scrollable Content Wrapper */}
+            <div className="w-full h-full flex flex-col-reverse md:flex-row overflow-y-auto md:overflow-hidden">
 
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-900 mb-1.5">
-                          School / College / Organization
-                        </label>
-                        <input
-                          name="organization"
-                          value={formData.organization}
-                          onChange={handleFormChange}
-                          placeholder="Enter your organization"
-                          className="w-full h-11 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-900 mb-1.5">
-                          Choose Type of generation
-                        </label>
-                        <div className="flex gap-2">
-                          {generationOptions.map((opt) => (
-                            <button
-                              key={opt.id}
-                              type="button"
-                              onClick={() => setGenerationType(opt.id)}
-                              className={cn(
-                                "flex-1 h-11 px-3 rounded-lg text-sm font-semibold transition border relative overflow-hidden",
-                                generationType === opt.id
-                                  ? "bg-black text-white border-black"
-                                  : "bg-white text-gray-900 border-gray-300 hover:border-gray-400"
-                              )}
-                            >
-                              {generationType === opt.id && (
-                                <motion.div
-                                  layoutId="selected-bg"
-                                  className="absolute inset-0 bg-black -z-10"
-                                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                                />
-                              )}
-                              {opt.title === "Medieval Warrior" ? "Warrior" : opt.title}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-900 mb-1.5">
-                          Upload Photo
-                        </label>
-                        <div className="relative">
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/jpeg,image/png"
-                            onChange={handleFileChange}
-                            className="hidden"
-                          />
-                          <div
-                            onClick={handleOpenWithWarning}
-                            className="flex items-center justify-between w-full h-11 px-4 rounded-lg border border-gray-300 cursor-pointer hover:border-gray-400 transition bg-white"
-                          >
-                            <span className="text-sm text-gray-500">
-                              {photoFile
-                                ? photoFile.name.length > 15
-                                  ? `${photoFile.name.slice(0, 35)}...`
-                                  : photoFile.name
-                                : "Select Image File"}
-                            </span>
-                            <button
-                              type="button"
-                              className="bg-black text-white px-4 py-1.5 rounded-md text-sm font-semibold"
-                            >
-                              Select File
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={handleGenerate}
-                        disabled={isGenerating}
-                        className="w-full h-11 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed mt-2"
-                      >
-                        {isGenerating ? "Generating..." : "Submit"}
-                      </button>
-                    </div>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="success"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                  >
-                    <h1
-                      className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2 pt-2"
-                      style={{ fontFamily: 'Calsans, sans-serif' }}
-                    >
-                      Awesome your AI avatar has been generated
-                    </h1>
-                    <p className="text-sm text-gray-600 mb-6">
-                      Great news! Your AI Avatar has been sent to your email and WhatsApp. Feel free to share with your friends and on social networks.
-                    </p>
-
-                    <button
-                      type="button"
-                      onClick={handleDownload}
-                      className="w-full h-11 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2"
-                    >
-                      <Download className="h-4 w-4" />
-                      Download AI Avatar
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-
-            {/* RIGHT SIDE - Image Preview */}
-            <div
-              className={cn(
-                "relative flex-col bg-gray-900",
-                "flex w-full md:w-1/2 md:static md:z-auto",
-                // Only add padding if NOT generating (allows full bleed for loading state)
-                !isGenerating && "p-4 lg:p-6"
-              )}
-            >
-              {/* Type Selection Tabs - Header */}
-              {!isGenerated && !isGenerating && (
-                <div className="mb-2 mt-10 md:mt-14 w-full flex justify-center md:block">
-                  <div className="flex gap-2 bg-white/10 backdrop-blur-sm rounded-xl p-1 w-fit max-w-[95%] md:w-auto md:max-w-none">
-                    {generationOptions.map((opt) => (
-                      <button
-                        key={opt.id}
-                        type="button"
-                        onClick={() => setPreviewType(opt.id)}
-                        className={cn(
-                          "flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5",
-                          previewType === opt.id
-                            ? "bg-white text-gray-900 shadow-sm"
-                            : "text-white/70 hover:text-white hover:bg-white/5"
-                        )}
-                      >
-                        <opt.icon className="w-3.5 h-3.5" />
-                        {opt.title}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Preview Area */}
+              {/* LEFT SIDE - Form */}
               <div
                 className={cn(
-                  "relative w-full h-full overflow-hidden",
-                  "rounded-none lg:rounded-2xl"
+                  "w-full md:w-1/2 p-4 md:p-12 bg-white transition-all duration-300 md:overflow-y-auto",
+                  isGenerating && "pointer-events-none blur-sm lg:blur-0 lg:pointer-events-auto"
                 )}
               >
                 <AnimatePresence mode="wait">
-                  {isGenerating ? (
+                  {!isGenerated ? (
                     <motion.div
-                      key="loading"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
+                      key="form"
+                      initial={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className={cn(
-                        "relative w-full overflow-hidden flex items-center justify-center bg-black",
-                        "h-[300px] md:h-full md:min-h-[70vh]",
-                        !isGenerating && "rounded-2xl"
-                      )}
                     >
-                      {/* Pure Black Background - No Image */}
+                      <h1
+                        className="text-3xl lg:text-4xl font-normal text-gray-900 mb-2 md:mt-12"
+                        style={{ fontFamily: 'Calsans, sans-serif' }}
+                      >
+                        Generate your avatar
+                      </h1>
+                      <p className="text-sm text-gray-500 mb-6">
+                        To generate your avatar, upload a clear, well-lit, front-facing photo without filters. We only do one generation, and it can take about a minute.
+                      </p>
 
-                      {/* Foreground Fade Image */}
-                      <AnimatePresence mode="wait">
-                        <motion.img
-                          key={fgIndex}
-                          src={loadingForegroundImages[fgIndex]}
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 1.05 }}
-                          transition={{ duration: 0.6, ease: "easeOut" }}
-                          className="
-                            absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2
-                            z-10 max-h-[85%] max-w-[90%] lg:max-h-[75%] lg:max-w-[80%]
-                            object-contain rounded-2xl shadow-2xl
-                          "
-                        />
-                      </AnimatePresence>
-
-                      {/* Countdown */}
-                      <div className="absolute bottom-8 z-20 text-center text-white">
-                        <div className="text-5xl font-mono font-bold tracking-wider drop-shadow-lg">
-                          {formattedCountdown}
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+                            Enter your name
+                          </label>
+                          <input
+                            name="name"
+                            value={formData.name}
+                            onChange={handleFormChange}
+                            placeholder="Enter your name"
+                            className="w-full h-11 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition"
+                          />
                         </div>
-                        <p className="text-xs mt-2 text-white/70">
-                          Generating your AI Avatar...
-                        </p>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+                            School / College / Organization
+                          </label>
+                          <input
+                            name="organization"
+                            value={formData.organization}
+                            onChange={handleFormChange}
+                            placeholder="Enter your organization"
+                            className="w-full h-11 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+                            Choose Type of generation
+                          </label>
+                          <div className="flex gap-2">
+                            {generationOptions.map((opt) => (
+                              <button
+                                key={opt.id}
+                                type="button"
+                                onClick={() => setGenerationType(opt.id)}
+                                className={cn(
+                                  "flex-1 h-11 px-2 md:px-2 lg:px-3 rounded-lg text-[10px] md:text-xs lg:text-sm font-semibold transition border relative overflow-hidden",
+                                  generationType === opt.id
+                                    ? "bg-black text-white border-black"
+                                    : "bg-white text-gray-900 border-gray-300 hover:border-gray-400"
+                                )}
+                              >
+                                {generationType === opt.id && (
+                                  <motion.div
+                                    layoutId="selected-bg"
+                                    className="absolute inset-0 bg-black -z-10"
+                                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                  />
+                                )}
+                                {opt.title === "Medieval Warrior" ? "Warrior" : opt.title}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+                            Upload Photo
+                          </label>
+                          <div className="relative">
+                            <input
+                              ref={fileInputRef}
+                              type="file"
+                              accept="image/jpeg,image/png"
+                              onChange={handleFileChange}
+                              className="hidden"
+                            />
+                            <div
+                              onClick={handleOpenWithWarning}
+                              className="flex items-center justify-between w-full h-11 px-4 rounded-lg border border-gray-300 cursor-pointer hover:border-gray-400 transition bg-white"
+                            >
+                              <span className="text-sm text-gray-500">
+                                {photoFile
+                                  ? photoFile.name.length > 15
+                                    ? `${photoFile.name.slice(0, 35)}...`
+                                    : photoFile.name
+                                  : "Select Image File"}
+                              </span>
+                              <button
+                                type="button"
+                                className="bg-black text-white px-4 py-1.5 rounded-md text-sm font-semibold"
+                              >
+                                Select File
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={handleGenerate}
+                          disabled={isGenerating}
+                          className="w-full h-11 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                        >
+                          {isGenerating ? "Generating..." : "Submit"}
+                        </button>
                       </div>
                     </motion.div>
                   ) : (
                     <motion.div
-                      key={isGenerated ? "result" : previewType}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      className="w-full h-full flex flex-col items-center justify-start"
+                      key="success"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
                     >
-                      <img
-                        src={
-                          isGenerated
-                            ? generatedImageUrl
-                            : activeOption.previewImg
-                        }
-                        alt="Avatar preview"
-                        className="max-h-[50vh] md:max-h-[75vh] max-w-full object-contain rounded-2xl shadow-2xl"
-                        onError={(e) => {
-                          console.error("Image load failed for URL:", generatedImageUrl);
-                          e.currentTarget.src = activeOption.previewImg;
-                          // If it's already generated but fails to load, maybe show a hint
-                          if (isGenerated) {
-                            toast.error("Failed to load generated avatar. Please try downloading it.");
-                          }
-                        }}
-                      />
+                      <h1
+                        className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2 pt-2"
+                        style={{ fontFamily: 'Calsans, sans-serif' }}
+                      >
+                        Awesome your AI avatar has been generated
+                      </h1>
+                      <p className="text-sm text-gray-600 mb-6">
+                        Great news! Your AI Avatar has been sent to your email and WhatsApp. Feel free to share with your friends and on social networks.
+                      </p>
 
-                      {/* Mobile Download Button */}
-                      {/* {isGenerated && isMobile && (
+                      <button
+                        type="button"
+                        onClick={handleDownload}
+                        className="w-full h-11 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2"
+                      >
+                        <Download className="h-4 w-4" />
+                        Download AI Avatar
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+
+              {/* RIGHT SIDE - Image Preview */}
+              <div
+                className={cn(
+                  "relative flex-col bg-gray-900",
+                  "flex w-full md:w-1/2 md:static md:z-auto",
+                  // Only add padding if NOT generating (allows full bleed for loading state)
+                  !isGenerating && "p-4 lg:p-6"
+                )}
+              >
+                {/* Type Selection Tabs - Header */}
+                {!isGenerated && !isGenerating && (
+                  <div className="mb-2 mt-16 md:mt-14 w-full">
+                    <div className="grid grid-cols-3 gap-2 bg-white/10 backdrop-blur-sm rounded-xl p-1 w-full">
+                      {generationOptions.map((opt) => (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => setPreviewType(opt.id)}
+                          className={cn(
+                            "w-full px-1 py-2 rounded-lg text-[10px] md:text-xs font-semibold transition flex items-center justify-center gap-1.5 whitespace-nowrap",
+                            previewType === opt.id
+                              ? "bg-white text-gray-900 shadow-sm"
+                              : "text-white/70 hover:text-white hover:bg-white/5"
+                          )}
+                        >
+                          <opt.icon className="w-3.5 h-3.5" />
+                          {opt.title === "Medieval Warrior" ? (
+                            <>
+                              <span className="md:hidden">Warrior</span>
+                              <span className="hidden md:inline">Medieval Warrior</span>
+                            </>
+                          ) : (
+                            opt.title
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Preview Area */}
+                <div
+                  className={cn(
+                    "relative w-full h-full overflow-hidden flex flex-col",
+                    "rounded-none lg:rounded-2xl",
+                    "min-h-[400px] md:min-h-0",
+                    isGenerating && "bg-black"
+                  )}
+                >
+                  <AnimatePresence mode="wait">
+                    {isGenerating ? (
+                      <motion.div
+                        key="loading"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className={cn(
+                          "relative w-full overflow-hidden flex flex-col items-center justify-center bg-black",
+                          "min-h-[350px] py-8 md:py-0 flex-1",
+                          !isGenerating && "rounded-2xl"
+                        )}
+                      >
+                        {/* Pure Black Background - No Image */}
+
+                        {/* Foreground Fade Image */}
+                        <AnimatePresence mode="wait">
+                          <motion.img
+                            key={fgIndex}
+                            src={loadingForegroundImages[fgIndex]}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 1.05 }}
+                            transition={{ duration: 0.6, ease: "easeOut" }}
+                            className="
+                            relative md:absolute md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2
+                            z-10 max-h-[60%] w-auto md:max-h-[75%] md:max-w-[80%]
+                            object-contain rounded-2xl shadow-2xl
+                          "
+                          />
+                        </AnimatePresence>
+
+                        {/* Countdown */}
+                        <div className="relative mt-4 md:mt-0 md:absolute md:bottom-8 z-20 text-center text-white">
+                          <div className="text-5xl font-mono font-bold tracking-wider drop-shadow-lg">
+                            {formattedCountdown}
+                          </div>
+                          <p className="text-xs mt-2 text-white/70">
+                            Generating your AI Avatar...
+                          </p>
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key={isGenerated ? "result" : previewType}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="w-full flex-1 flex flex-col items-center justify-start"
+                      >
+                        <img
+                          src={
+                            isGenerated
+                              ? generatedImageUrl
+                              : activeOption.previewImg
+                          }
+                          alt="Avatar preview"
+                          className="max-h-[50vh] md:max-h-[75vh] max-w-full object-contain rounded-2xl shadow-2xl"
+                          onError={(e) => {
+                            console.error("Image load failed for URL:", generatedImageUrl);
+                            e.currentTarget.src = activeOption.previewImg;
+                            // If it's already generated but fails to load, maybe show a hint
+                            if (isGenerated) {
+                              toast.error("Failed to load generated avatar. Please try downloading it.");
+                            }
+                          }}
+                        />
+
+                        {/* Mobile Download Button */}
+                        {/* {isGenerated && isMobile && (
                         <button
                           type="button"
                           onClick={handleDownload}
@@ -1176,13 +1176,17 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                           Download AI Avatar
                         </button>
                       )} */}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
-                {/* Bottom branding */}
-                <div className="pt-4 text-center text-white/60 text-xs shrink-0">
-                  Created using FrameForge.one
+                  {/* Bottom branding */}
+                  <div className={cn(
+                    "pt-4 text-center text-xs shrink-0 pb-6 md:pb-8",
+                    isGenerating ? "text-white/60" : "text-white/60 md:text-gray-500"
+                  )}>
+                    Created using FrameForge.one
+                  </div>
                 </div>
               </div>
             </div>
