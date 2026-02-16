@@ -18,7 +18,7 @@ export function Whatsapp({ open, setOpen }: Props) {
   return (
     <Dialog open={open} onOpenChange={() => setOpen(false)}>
       <DialogContent
-        className="fixed w-full max-w-md rounded-xl p-6"
+        className="fixed w-[90%] md:w-full max-w-md rounded-xl p-6"
         style={{
           backgroundColor: "#fff",
           color: "var(--neutral-50)",
