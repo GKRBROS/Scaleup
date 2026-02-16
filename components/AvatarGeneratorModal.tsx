@@ -42,28 +42,28 @@ const generationOptions: {
   icon: any;
   previewImg: string;
 }[] = [
-  {
-    id: "superhero",
-    title: "Superhero",
-    subtitle: "Turns you into a superhero",
-    icon: Shield,
-    previewImg: "/superhero.png",
-  },
-  {
-    id: "professional",
-    title: "Professional",
-    subtitle: "A well curated professional shot",
-    icon: Briefcase,
-    previewImg: "/professional.png",
-  },
-  {
-    id: "medieval",
-    title: "Medieval Warrior",
-    subtitle: "An ancient fierce warrior",
-    icon: Sword,
-    previewImg: "/medieval.png",
-  },
-];
+    {
+      id: "superhero",
+      title: "Superhero",
+      subtitle: "Turns you into a superhero",
+      icon: Shield,
+      previewImg: "/superhero.png",
+    },
+    {
+      id: "professional",
+      title: "Professional",
+      subtitle: "A well curated professional shot",
+      icon: Briefcase,
+      previewImg: "/professional.png",
+    },
+    {
+      id: "medieval",
+      title: "Medieval Warrior",
+      subtitle: "An ancient fierce warrior",
+      icon: Sword,
+      previewImg: "/medieval.png",
+    },
+  ];
 
 const loadingForegroundImages = [
   "/assets/images/1_eng.png",
@@ -122,13 +122,13 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       document.body.style.overflow = "hidden";
       try {
         window.dispatchEvent(new CustomEvent("avatar-modal-opened"));
-      } catch {}
+      } catch { }
     }
     return () => {
       document.body.style.overflow = "";
       try {
         window.dispatchEvent(new CustomEvent("avatar-modal-closed"));
-      } catch {}
+      } catch { }
     };
   }, [isOpen]);
 
@@ -136,7 +136,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     userId: registrationData?.user_id || "",
     name: registrationData?.name || "",
     email: registrationData?.email || "",
-    phone_no: registrationData?.phone_no || "",
+    phone_no: registrationData?.phone_no || "0000000000",
     dialCode: registrationData?.dial_code || "+91",
     district: registrationData?.district || "",
     category: registrationData?.category || "",
@@ -150,7 +150,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         userId: registrationData.user_id || "",
         name: registrationData.name || "",
         email: registrationData.email || "",
-        phone_no: registrationData.phone_no || "",
+        phone_no: registrationData.phone_no || "0000000000",
         dialCode: registrationData.dial_code || "+91",
         district: registrationData.district || "",
         category: registrationData.category || "",
@@ -314,7 +314,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
     // Check direct keys
     keys.forEach(k => addIfString(payload[k]));
-    
+
     // Check nested objects
     ["user", "data", "result"].forEach(objKey => {
       if (payload[objKey] && typeof payload[objKey] === "object") {
@@ -362,9 +362,9 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     // Tier 3: Avoid original uploads and tickets if possible
     const filtered = candidates.filter(url => {
       const lowUrl = url.toLowerCase();
-      return !lowUrl.includes("/uploads/") && 
-             !lowUrl.includes("-ticket") && 
-             !lowUrl.includes("makemypass.com");
+      return !lowUrl.includes("/uploads/") &&
+        !lowUrl.includes("-ticket") &&
+        !lowUrl.includes("makemypass.com");
     });
     if (filtered.length > 0) {
       console.log("AvatarGeneratorModal: Found Tier 3 (Filtered) image URL:", filtered[0]);
@@ -393,12 +393,12 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         district: formData.district,
         category: formData.category
       });
-      
+
       let missingFields = [];
       if (!formData.name) missingFields.push("Name");
       if (!formData.email) missingFields.push("Email");
       if (!formData.organization) missingFields.push("Organization");
-      
+
       if (missingFields.length > 0) {
         toast.error(`Please fill the following required fields: ${missingFields.join(", ")}`);
       } else {
@@ -416,7 +416,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     setIsGenerating(true);
     setGeneratedImageUrl("");
     setIsGenerated(false);
-    
+
     // Ensure generationType is valid, fallback to superhero if needed
     const finalGenerationType = generationType || "superhero";
 
@@ -438,7 +438,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
           }
 
           const response = await fetch(url.toString(), { cache: 'no-store' });
-          
+
           // 202 Accepted means still processing - we should continue polling
           if (response.status === 202) {
             if (attempt % 5 === 0) {
@@ -473,7 +473,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
             const imageWithBuster = absoluteUrl.includes('X-Amz-Signature')
               ? absoluteUrl
               : `${absoluteUrl}${absoluteUrl.includes('?') ? '&' : '?'}v=${Date.now()}`;
-            
+
             // If the URL (without buster) is exactly the same as the old one, it's likely stale data
             if (currentOldUrl && absoluteUrl === currentOldUrl.split('?')[0]) {
               if (attempt % 5 === 0) {
@@ -485,7 +485,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
             console.log(`Polling successful on attempt ${attempt + 1}! Found new image:`, absoluteUrl);
             return imageWithBuster;
           }
-          
+
           if (attempt % 5 === 0) {
             console.log(`Polling attempt ${attempt + 1}: Image not ready yet...`);
           }
@@ -495,7 +495,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
         await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
-      
+
       console.error("Polling timed out after 120 seconds.");
       return "";
     };
@@ -525,7 +525,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         });
       } catch (fetchError) {
         console.error("Network error during initial POST:", fetchError);
-        
+
         // Robust fallback: if POST fails with a network error, it might still have reached the server!
         // We attempt to poll anyway using the userId we already have.
         const fallbackUserId = formData.userId || formData.phone_no;
@@ -539,7 +539,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
             return;
           }
         }
-        
+
         toast.error("Network error. Please check your connection and try again.");
         setIsGenerating(false);
         return;
@@ -549,7 +549,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
       if (!response.ok) {
         console.error("API returned error status:", response.status);
-        
+
         // Even on server error, if we have a userId, try polling as a last resort
         const fallbackUserId = formData.userId || formData.phone_no;
         if (fallbackUserId) {
@@ -562,7 +562,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
             return;
           }
         }
-        
+
         toast.error(`Server error (${response.status}). Please try again.`);
         setIsGenerating(false);
         return;
@@ -576,18 +576,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         console.log("Parsed result:", result);
       } catch (parseError) {
         console.error("JSON parse error:", parseError);
-        const fallbackUserId = formData.userId || formData.phone_no;
-        if (fallbackUserId) {
-          console.log(`JSON parse error, attempting to poll anyway for ${fallbackUserId}...`);
-          const imageUrl = await fetchGeneratedImageUrl(fallbackUserId, oldImageUrl);
-          if (imageUrl) {
-            setGeneratedImageUrl(imageUrl);
-            setIsGenerated(true);
-            setIsGenerating(false);
-            return;
-          }
-        }
-        toast.error("Server returned invalid response. If your avatar finishes later, it will still be sent to your email and WhatsApp.");
+        toast.error("Server returned invalid response. Please try again.");
         setIsGenerating(false);
         return;
       }
@@ -599,7 +588,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
       const finalImageUrl = extractFinalImageUrl(result);
       console.log("Extracted finalImageUrl from initial response:", finalImageUrl);
-      
+
       // Even if an image is returned in initial response, if it's the same as old one, we must poll
       if (finalImageUrl) {
         const absoluteUrl = getAbsoluteUrl(finalImageUrl);
@@ -607,14 +596,14 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         const imageWithBuster = absoluteUrl.includes('X-Amz-Signature')
           ? absoluteUrl
           : `${absoluteUrl}${absoluteUrl.includes('?') ? '&' : '?'}v=${Date.now()}`;
-        
+
         // Use .split('?')[0] to compare URLs without cache busters
         if (!oldImageUrl || absoluteUrl !== oldImageUrl.split('?')[0]) {
           console.log("Found NEW image in initial response, skipping polling");
           setGeneratedImageUrl(imageWithBuster);
           setIsGenerated(true);
           setIsGenerating(false);
-          
+
           // After successful generation, update the DB with final image info if user_id is present
           if (result.user_id) {
             const userId = result.user_id;
@@ -638,13 +627,14 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
       // Use user_id from response if available, otherwise use the one we have in formData
       const pollUserId = result.user_id || formData.userId || formData.phone_no;
-      
+
       if (pollUserId) {
         const imageUrl = await fetchGeneratedImageUrl(pollUserId, oldImageUrl);
         if (imageUrl) {
           setGeneratedImageUrl(imageUrl);
           setIsGenerated(true);
-          
+
+          // Also update DB after polling success
           try {
             await fetch(`https://scaleup.frameforge.one/scaleup2026/user/${encodeURIComponent(pollUserId)}`, {
               method: "PATCH",
@@ -657,13 +647,13 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
             console.error("Failed to update DB after polling:", updateError);
           }
         } else {
-          toast("Image generation is taking longer than expected. If your avatar finishes later, it will still be sent to your email and WhatsApp.");
+          toast("Image generation is taking longer than expected. Please try again.");
         }
         setIsGenerating(false);
         return;
       }
 
-      toast.error("Image generation failed. If this keeps happening, please retry from a stable connection. If the backend still finishes later, your avatar will be delivered to your email and WhatsApp.");
+      toast.error("Image generation failed. Please try again.");
       setIsGenerating(false);
     } catch (error) {
       console.error("Error generating avatar:", error);
@@ -704,10 +694,10 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
     console.log("handleDownload: Starting download for:", imageUrl);
     setIsDownloading(true);
-    
+
     try {
       const filename = `scaleup-avatar-${registrationData?.user_id || "user"}.png`;
-      
+
       // If the URL is already a proxy URL, extract the original URL
       let targetUrl = imageUrl;
       if (targetUrl.includes("/api/proxy-image?url=")) {
@@ -730,8 +720,8 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       // and they are inherently unique/short-lived.
       let urlForProxy = targetUrl;
       if (!targetUrl.includes("X-Amz-Signature")) {
-        urlForProxy = targetUrl.includes("?") 
-          ? `${targetUrl}&t=${Date.now()}` 
+        urlForProxy = targetUrl.includes("?")
+          ? `${targetUrl}&t=${Date.now()}`
           : `${targetUrl}?t=${Date.now()}`;
       }
 
@@ -747,7 +737,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
       const blob = await response.blob();
       console.log(`handleDownload: Received blob of size ${blob.size} and type ${blob.type}`);
-      
+
       const url = window.URL.createObjectURL(blob);
 
       const link = document.createElement("a");
@@ -777,12 +767,12 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     setPhotoFile(null);
     setGeneratedImageUrl("");
     setGeneratedUserId("");
-    
+
     // Explicitly reset the file input if possible
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-    
+
     onClose();
   };
 
@@ -804,9 +794,10 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       <div style="
         background: white;
         padding: 24px;
-        width: 100%;
-        max-width: 400px;
+        width: 90%;
+        max-width: 600px;
         border-radius: 12px;
+        box-sizing: border-box;
         box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         font-family: sans-serif;
       ">
@@ -816,6 +807,18 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         <p style="font-size: 14px; color: #555; margin-bottom: 20px;">
           Before you continue: This AI generation can be used only once. Make sure your photo is bright, clear, and shows your face fully. For best results, a professionally taken photo is recommended. A good photo = a great result
         </p>
+        <img
+          src="/Image to use.webp"
+          alt="Guidelines"
+          style="
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            object-fit: contain;
+            display: block;
+          "
+        />
         <div style="display: flex; justify-content: flex-end; gap: 12px;">
           <button id="warning-cancel" style="
             padding: 8px 14px;
@@ -864,10 +867,9 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       {isOpen && (
         <motion.div
           className={cn(
-            "fixed inset-0 z-[1000] flex items-center justify-center p-4",
-            isMobile && "p-0"
+            "fixed inset-0 z-[1000] flex justify-center bg-black/50 backdrop-blur-sm items-center p-4"
           )}
-          // onClick={!isMobile ? handleClose : undefined} // Removed to prevent closing on outside click
+        // onClick={!isMobile ? handleClose : undefined} // Removed to prevent closing on outside click
         >
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -875,8 +877,10 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
             exit={{ opacity: 0, scale: 0.95 }}
             onClick={(e) => e.stopPropagation()}
             className={cn(
-              "relative w-full bg-white shadow-2xl overflow-y-auto flex flex-col-reverse md:flex-row",
-              isMobile ? "min-h-screen" : "max-w-5xl max-h-[95vh] rounded-3xl md:overflow-hidden"
+              "relative bg-white shadow-2xl flex flex-col-reverse md:flex-row",
+              "w-[95%] md:w-full max-w-5xl max-h-[90vh]",
+              "rounded-2xl md:rounded-3xl",
+              "overflow-y-auto md:overflow-hidden"
             )}
           >
             {/* Close button - positioned differently for mobile */}
@@ -894,179 +898,178 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
               <button
                 type="button"
                 onClick={handleClose}
-                className="fixed top-4 right-4 z-50 p-2 rounded-full bg-gray-900 text-white shadow-lg hover:bg-gray-800 transition"
+                className="absolute top-4 right-4 z-50 p-2 rounded-full bg-gray-900 text-white shadow-lg hover:bg-gray-800 transition"
               >
                 <X className="w-6 h-6" />
               </button>
             )}
 
             {/* LEFT SIDE - Form */}
-            {!(isGenerating && isMobile) && (
-              <div
-                className={cn(
-                  "w-full lg:w-1/2 p-6 sm:p-8 lg:p-12 bg-white transition-all duration-300 md:overflow-y-auto",
-                  isGenerating && "pointer-events-none blur-sm lg:blur-0 lg:pointer-events-auto"
-                )}
-              >
-                <AnimatePresence mode="wait">
-                  {!isGenerated ? (
-                    <motion.div
-                      key="form"
-                      initial={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
+            <div
+              className={cn(
+                "w-full lg:w-1/2 p-4 md:p-8 lg:p-12 bg-white transition-all duration-300 md:overflow-y-auto",
+                isGenerating && "pointer-events-none blur-sm lg:blur-0 lg:pointer-events-auto"
+              )}
+            >
+              <AnimatePresence mode="wait">
+                {!isGenerated ? (
+                  <motion.div
+                    key="form"
+                    initial={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <h1
+                      className="text-3xl lg:text-4xl font-normal text-gray-900 mb-2 md:mt-12"
+                      style={{ fontFamily: 'Calsans, sans-serif' }}
                     >
-                      <h1
-                        className="text-3xl lg:text-4xl font-normal text-gray-900 mb-2"
-                        style={{ fontFamily: 'Calsans, sans-serif' }}
-                      >
-                        Generate your avatar
-                      </h1>
-                      <p className="text-sm text-gray-500 mb-6">
-                        To generate your avatar, upload a clear, well-lit, front-facing photo without filters. We only do one generation, and it can take about a minute.
-                      </p>
+                      Generate your avatar
+                    </h1>
+                    <p className="text-sm text-gray-500 mb-6">
+                      To generate your avatar, upload a clear, well-lit, front-facing photo without filters. We only do one generation, and it can take about a minute.
+                    </p>
 
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-900 mb-1.5">
-                            Enter your name
-                          </label>
-                          <input
-                            name="name"
-                            value={formData.name}
-                            onChange={handleFormChange}
-                            placeholder="Enter your name"
-                            className="w-full h-11 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-900 mb-1.5">
-                            School / College / Organization
-                          </label>
-                          <input
-                            name="organization"
-                            value={formData.organization}
-                            onChange={handleFormChange}
-                            placeholder="Enter your organization"
-                            className="w-full h-11 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-900 mb-1.5">
-                            Choose Type of generation
-                          </label>
-                          <div className="flex gap-2">
-                            {generationOptions.map((opt) => (
-                              <button
-                                key={opt.id}
-                                type="button"
-                                onClick={() => setGenerationType(opt.id)}
-                                className={cn(
-                                  "flex-1 h-11 px-3 rounded-lg text-sm font-semibold transition border relative overflow-hidden",
-                                  generationType === opt.id
-                                    ? "bg-black text-white border-black"
-                                    : "bg-white text-gray-900 border-gray-300 hover:border-gray-400"
-                                )}
-                              >
-                                {generationType === opt.id && (
-                                  <motion.div
-                                    layoutId="selected-bg"
-                                    className="absolute inset-0 bg-black -z-10"
-                                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                                  />
-                                )}
-                                {opt.title === "Medieval Warrior" ? "Warrior" : opt.title}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-900 mb-1.5">
-                            Upload Photo
-                          </label>
-                          <div className="relative">
-                            <input
-                              ref={fileInputRef}
-                              type="file"
-                              accept="image/jpeg,image/png,image/jpg,.jpeg,.jpg,.png"
-                              onChange={handleFileChange}
-                              className="hidden"
-                            />
-                            <div
-                              onClick={handleOpenWithWarning}
-                              className="flex items-center justify-between w-full h-11 px-4 rounded-lg border border-gray-300 cursor-pointer hover:border-gray-400 transition bg-white"
-                            >
-                              <span className="text-sm text-gray-500">
-                                {photoFile
-                                  ? photoFile.name.length > 15
-                                    ? `${photoFile.name.slice(0, 35)}...`
-                                    : photoFile.name
-                                  : "Select Image File"}
-                              </span>
-                              <button
-                                type="button"
-                                className="bg-black text-white px-4 py-1.5 rounded-md text-sm font-semibold"
-                              >
-                                Select File
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={handleGenerate}
-                          disabled={isGenerating}
-                          className="w-full h-11 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed mt-2"
-                        >
-                          {isGenerating ? "Generating..." : "Submit"}
-                        </button>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+                          Enter your name
+                        </label>
+                        <input
+                          name="name"
+                          value={formData.name}
+                          onChange={handleFormChange}
+                          placeholder="Enter your name"
+                          className="w-full h-11 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition"
+                        />
                       </div>
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="success"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                    >
-                      <h1
-                        className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2 pt-2"
-                        style={{ fontFamily: 'Calsans, sans-serif' }}
-                      >
-                        Awesome your AI avatar has been generated
-                      </h1>
-                      <p className="text-sm text-gray-600 mb-6">
-                        Great news! Your AI Avatar has been sent to your email and WhatsApp. Feel free to share with your friends and on social networks.
-                      </p>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+                          School / College / Organization
+                        </label>
+                        <input
+                          name="organization"
+                          value={formData.organization}
+                          onChange={handleFormChange}
+                          placeholder="Enter your organization"
+                          className="w-full h-11 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+                          Choose Type of generation
+                        </label>
+                        <div className="flex gap-2">
+                          {generationOptions.map((opt) => (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              onClick={() => setGenerationType(opt.id)}
+                              className={cn(
+                                "flex-1 h-11 px-3 rounded-lg text-sm font-semibold transition border relative overflow-hidden",
+                                generationType === opt.id
+                                  ? "bg-black text-white border-black"
+                                  : "bg-white text-gray-900 border-gray-300 hover:border-gray-400"
+                              )}
+                            >
+                              {generationType === opt.id && (
+                                <motion.div
+                                  layoutId="selected-bg"
+                                  className="absolute inset-0 bg-black -z-10"
+                                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                />
+                              )}
+                              {opt.title === "Medieval Warrior" ? "Warrior" : opt.title}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+                          Upload Photo
+                        </label>
+                        <div className="relative">
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/jpeg,image/png"
+                            onChange={handleFileChange}
+                            className="hidden"
+                          />
+                          <div
+                            onClick={handleOpenWithWarning}
+                            className="flex items-center justify-between w-full h-11 px-4 rounded-lg border border-gray-300 cursor-pointer hover:border-gray-400 transition bg-white"
+                          >
+                            <span className="text-sm text-gray-500">
+                              {photoFile
+                                ? photoFile.name.length > 15
+                                  ? `${photoFile.name.slice(0, 35)}...`
+                                  : photoFile.name
+                                : "Select Image File"}
+                            </span>
+                            <button
+                              type="button"
+                              className="bg-black text-white px-4 py-1.5 rounded-md text-sm font-semibold"
+                            >
+                              Select File
+                            </button>
+                          </div>
+                        </div>
+                      </div>
 
                       <button
-                        type="button"
-                        onClick={handleDownload}
-                        className="w-full h-11 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2"
+                        onClick={handleGenerate}
+                        disabled={isGenerating}
+                        className="w-full h-11 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed mt-2"
                       >
-                        <Download className="h-4 w-4" />
-                        Download AI Avatar
+                        {isGenerating ? "Generating..." : "Submit"}
                       </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            )}
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="success"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    <h1
+                      className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2 pt-2"
+                      style={{ fontFamily: 'Calsans, sans-serif' }}
+                    >
+                      Awesome your AI avatar has been generated
+                    </h1>
+                    <p className="text-sm text-gray-600 mb-6">
+                      Great news! Your AI Avatar has been sent to your email and WhatsApp. Feel free to share with your friends and on social networks.
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={handleDownload}
+                      className="w-full h-11 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download AI Avatar
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
 
             {/* RIGHT SIDE - Image Preview */}
             <div
               className={cn(
                 "relative flex-col bg-gray-900",
-                "flex w-full p-4 md:p-0 md:w-1/2 md:static md:z-auto",
-                "md:flex lg:p-6",
-                (isGenerating || isGenerated) && "absolute inset-0 z-[60] w-full h-full p-4 md:static md:z-auto"
+                "flex w-full md:w-1/2 md:static md:z-auto",
+                // Only add padding if NOT generating (allows full bleed for loading state)
+                !isGenerating && "p-4 lg:p-6"
               )}
             >
               {/* Type Selection Tabs - Header */}
               {!isGenerated && !isGenerating && (
-                <div className="mb-6">
-                  <div className="flex gap-2 bg-white/10 backdrop-blur-sm rounded-xl p-1">
+                <div className="mb-2 mt-10 md:mt-14 w-full flex justify-center md:block">
+                  <div className="flex gap-2 bg-white/10 backdrop-blur-sm rounded-xl p-1 w-fit max-w-[95%] md:w-auto md:max-w-none">
                     {generationOptions.map((opt) => (
                       <button
                         key={opt.id}
@@ -1101,16 +1104,13 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="relative w-full h-full min-h-[70vh] rounded-2xl overflow-hidden flex items-center justify-center"
+                      className={cn(
+                        "relative w-full overflow-hidden flex items-center justify-center bg-black",
+                        "h-[300px] md:h-full md:min-h-[70vh]",
+                        !isGenerating && "rounded-2xl"
+                      )}
                     >
-                      {/* Background Image */}
-                      <div
-                        className="absolute inset-0 bg-cover bg-center scale-105"
-                        style={{
-                          backgroundImage: "url('/assets/images/base.png')",
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+                      {/* Pure Black Background - No Image */}
 
                       {/* Foreground Fade Image */}
                       <AnimatePresence mode="wait">
@@ -1145,7 +1145,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.95 }}
-                      className="w-full h-full flex flex-col items-center justify-center px-6 pb-16"
+                      className="w-full h-full flex flex-col items-center justify-start"
                     >
                       <img
                         src={
@@ -1154,7 +1154,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                             : activeOption.previewImg
                         }
                         alt="Avatar preview"
-                        className="max-h-[75vh] max-w-full object-contain rounded-2xl shadow-2xl"
+                        className="max-h-[50vh] md:max-h-[75vh] max-w-full object-contain rounded-2xl shadow-2xl"
                         onError={(e) => {
                           console.error("Image load failed for URL:", generatedImageUrl);
                           e.currentTarget.src = activeOption.previewImg;
@@ -1166,7 +1166,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                       />
 
                       {/* Mobile Download Button */}
-                      {isGenerated && isMobile && (
+                      {/* {isGenerated && isMobile && (
                         <button
                           type="button"
                           onClick={handleDownload}
@@ -1175,7 +1175,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                           <Download className="h-4 w-4" />
                           Download AI Avatar
                         </button>
-                      )}
+                      )} */}
                     </motion.div>
                   )}
                 </AnimatePresence>

@@ -138,7 +138,7 @@ function Involved() {
                 href={card.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-4 flex items-center justify-between font-semibold no-underline"
+                className="mt-4 flex items-center gap-4 font-semibold no-underline"
                 style={{
                   fontSize: isMobile ? "14px" : "16px",
                   color: isActive ? "#FFFFFF" : "black",

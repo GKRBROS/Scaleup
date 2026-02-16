@@ -53,7 +53,7 @@ export function AiModalPop({
   const [isExternalModalOpen, setIsExternalModalOpen] = useState(false);
   const [avatarRegistrationData, setAvatarRegistrationData] =
     useState<AvatarRegistrationData | null>(null);
-  
+
   const [mail, setMail] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
@@ -94,7 +94,7 @@ export function AiModalPop({
 
     // Check direct keys
     keys.forEach(k => addIfString(payload[k]));
-    
+
     // Check nested objects
     ["user", "data", "result"].forEach(objKey => {
       if (payload[objKey] && typeof payload[objKey] === "object") {
@@ -142,9 +142,9 @@ export function AiModalPop({
     // Tier 3: Avoid original uploads and tickets if possible
     const filtered = candidates.filter(url => {
       const lowUrl = url.toLowerCase();
-      return !lowUrl.includes("/uploads/") && 
-             !lowUrl.includes("-ticket") && 
-             !lowUrl.includes("makemypass.com");
+      return !lowUrl.includes("/uploads/") &&
+        !lowUrl.includes("-ticket") &&
+        !lowUrl.includes("makemypass.com");
     });
     if (filtered.length > 0) {
       console.log("AiModalPop: Found Tier 3 (Filtered) image URL:", filtered[0]);
@@ -198,7 +198,7 @@ export function AiModalPop({
 
     return () => clearInterval(interval);
   }, [otpSent, timeLeft]);
-  
+
   useEffect(() => {
     const openAiPop = () => {
       setShowPhoneModal(true); // this opens the OTP / phone modal
@@ -292,11 +292,11 @@ export function AiModalPop({
     setExistingImageUrl(absUrl);
     setShowExistingImageModal(true);
     setShowPhoneModal(false);
-    
+
     // CRITICAL: Ensure AvatarGeneratorModal is cleared of any old generation state
     // when we are showing an existing image from OTP verification.
     setIsAvatarModalOpen(false);
-    
+
     if (mail) {
       setVerifiedAt(mail);
     }
@@ -381,7 +381,7 @@ export function AiModalPop({
         console.error("MakeMyPass API validation failed", makemypassData);
         toast.error(
           makemypassData.error ||
-            "MakeMyPass API validation failed. Please try again."
+          "MakeMyPass API validation failed. Please try again."
         );
         setLoading(false);
         return;
@@ -413,37 +413,37 @@ export function AiModalPop({
     setLoading(true);
     try {
       const response = await fetch(
-          "https://scaleup.frameforge.one/scaleup2026/otp/verify",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: mail,
-              phone_no: avatarRegistrationData?.phone_no || "0000000000",
-              otp,
-            }),
-          },
-        );
+        "https://scaleup.frameforge.one/scaleup2026/otp/verify",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: mail,
+            phone_no: avatarRegistrationData?.phone_no || "0000000000",
+            otp,
+          }),
+        },
+      );
 
       const responseData = await response.json().catch(() => ({}));
       console.log("OTP Verification Full Response:", JSON.stringify(responseData, null, 2));
 
       if (response.ok) {
         const user = responseData.user || {};
-        
+
         // Use the robust extractor for the image URL
         const rawBackendImageUrl = extractFinalImageUrl(responseData);
-        
+
         console.log("Extracted raw image URL using robust helper:", rawBackendImageUrl);
-        
+
         if (rawBackendImageUrl) {
           const backendImageUrl = getAbsoluteUrl(rawBackendImageUrl);
           console.log("Found image URL, showing existing image modal:", backendImageUrl);
-          
+
           if (typeof window !== "undefined") {
             localStorage.setItem(`scaleup2026:final_image_url:${mail}`, backendImageUrl);
           }
-          
+
           // Force showing the existing image modal immediately
           handleShowExistingImage(backendImageUrl);
           setLoading(false);
@@ -451,7 +451,7 @@ export function AiModalPop({
         }
 
         console.log("No image URL found, checking if we should fetch from user endpoint...");
-        
+
         // If we have a user ID but no image URL in the response, try one more fetch from the user detail endpoint
         const userId = user.id || user.user_id || responseData.user_id;
         if (userId) {
@@ -495,7 +495,7 @@ export function AiModalPop({
   const handleOpenAvatarGenerator = (userData?: any) => {
     console.log("handleOpenAvatarGenerator called with userData:", userData);
     setShowPhoneModal(false);
-    
+
     // Try to recover missing fields from localStorage if they aren't in userData
     let recoveredData = { ...userData };
     if (typeof window !== "undefined" && mail) {
@@ -505,13 +505,13 @@ export function AiModalPop({
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
-          
+
           // Merge logic: API data takes precedence, but only if it's truthy
           // This prevents empty strings from API overwriting truthy values from localStorage
           const mergeFields = ['name', 'phone_no', 'district', 'category', 'organization'];
-          
+
           recoveredData = { ...parsed };
-          
+
           if (userData) {
             Object.keys(userData).forEach(key => {
               if (userData[key]) {
@@ -519,7 +519,7 @@ export function AiModalPop({
               }
             });
           }
-          
+
           console.log("Final merged recoveredData:", recoveredData);
         } catch (e) {
           console.error("Error parsing stored registration data:", e);
@@ -537,7 +537,7 @@ export function AiModalPop({
       category: recoveredData?.category || "",
       organization: recoveredData?.organization || "",
     };
-    
+
     console.log("Setting avatarRegistrationData to:", finalRegistrationData);
     setAvatarRegistrationData(finalRegistrationData);
     setIsAvatarModalOpen(true);
@@ -545,6 +545,10 @@ export function AiModalPop({
   };
 
   const openPhoneModal = () => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("close-whatsapp-modal"));
+    }
+
     if (mail && isVerifiedRecently(mail)) {
       const storedUrl = getStoredImageUrl(mail);
       if (storedUrl) {
@@ -569,10 +573,10 @@ export function AiModalPop({
 
   const handleClosePhoneModal = () => {
     setShowPhoneModal(false);
-    
+
     // Also ensure avatar modal is closed to prevent any overlap
     setIsAvatarModalOpen(false);
-    
+
     resetForm();
   };
 
@@ -588,7 +592,7 @@ export function AiModalPop({
     try {
       // Use proxy to fetch image to bypass CORS and force download
       const filename = `avatar-${mail || "user"}.png`;
-      
+
       // If the URL is already a proxy URL, extract the original URL
       let targetUrl = existingImageUrl;
       if (targetUrl.includes("/api/proxy-image?url=")) {
@@ -610,8 +614,8 @@ export function AiModalPop({
       // Presigned URLs already have a unique signature that shouldn't be tampered with.
       let urlForProxy = targetUrl;
       if (!targetUrl.includes("X-Amz-Signature")) {
-        urlForProxy = targetUrl.includes("?") 
-          ? `${targetUrl}&t=${Date.now()}` 
+        urlForProxy = targetUrl.includes("?")
+          ? `${targetUrl}&t=${Date.now()}`
           : `${targetUrl}?t=${Date.now()}`;
       }
 
@@ -627,7 +631,7 @@ export function AiModalPop({
 
       const blob = await response.blob();
       console.log(`handleDownloadExistingImage: Received blob of size ${blob.size} and type ${blob.type}`);
-      
+
       const url = window.URL.createObjectURL(blob);
 
       const link = document.createElement("a");
@@ -655,10 +659,10 @@ export function AiModalPop({
 
       {/* Email & OTP Modal - Fully Responsive */}
       <Dialog open={showPhoneModal} onOpenChange={handleClosePhoneModal}>
-        <DialogContent 
+        <DialogContent
           onPointerDownOutside={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
-          className="z-[1000] w-[95vw] sm:w-[90vw] md:w-[600px] lg:w-[700px] max-w-[700px] h-auto max-h-[90vh] md:h-[372px] p-0 overflow-hidden rounded-xl [&>button]:text-white"
+          className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-[1000] w-[95vw] sm:w-[90vw] md:w-[750px] lg:w-[900px] max-w-[900px] h-auto max-h-[90vh] md:h-[450px] p-0 overflow-hidden rounded-xl [&>button]:text-white"
         >
           <VisuallyHidden>
             <DialogTitle>Email Verification</DialogTitle>
@@ -668,9 +672,8 @@ export function AiModalPop({
 
             {/* LEFT SIDE - Forms - Responsive Padding */}
             <div
-              className={`w-full md:w-1/2 ${
-                !otpSent ? "flex" : "grid"
-              } items-center overflow-y-auto bg-white p-4 sm:p-6 md:p-4`}
+              className={`w-full h-auto md:h-full md:w-1/2 ${!otpSent ? "flex" : "grid"
+                } items-start md:items-center overflow-y-auto bg-white p-4 sm:p-6 md:p-4`}
             >
 
               {!otpSent ? (
@@ -777,8 +780,8 @@ export function AiModalPop({
             </div>
 
             {/* RIGHT SIDE - Images/GIF - Shows at top on mobile, right side on md+ */}
-            <div className="block md:w-1/2 w-full h-40 sm:h-48 md:h-auto relative bg-gray-900">
-              <div className="absolute inset-0 flex items-center justify-center p-0">
+            <div className="block md:w-1/2 w-full h-[35vh] md:h-auto relative bg-gray-900 overflow-hidden">
+              <div className="md:absolute md:inset-0 relative w-full h-full flex items-center justify-center p-0">
                 <img
                   src="/assets/images/reg1.png"
                   alt="Register"
@@ -827,39 +830,39 @@ export function AiModalPop({
                   className="w-full h-auto max-h-[50vh] sm:max-h-[60vh] object-contain"
                   onLoad={() => console.log("Existing image loaded successfully")}
                   onError={(e) => {
-                      console.error("Existing image failed to load via proxy:", existingImageUrl);
-                      const imgElement = e.currentTarget as HTMLImageElement;
-                      
-                      // If it already failed direct load, don't try again
-                      if (imgElement.getAttribute("data-fallback-failed") === "true") return;
+                    console.error("Existing image failed to load via proxy:", existingImageUrl);
+                    const imgElement = e.currentTarget as HTMLImageElement;
 
-                      if (imgElement.src.includes("proxy-image")) {
-                        console.log("Attempting direct image load fallback...");
-                        imgElement.src = existingImageUrl;
-                      } else {
-                        console.error("Direct image load also failed.");
-                        imgElement.setAttribute("data-fallback-failed", "true");
-                        toast.error("Image could not be loaded. It might be private or expired.");
-                      }
-                    }}
-                  />
-                ) : (
-                  <div className="flex flex-col items-center gap-2 p-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-                    <p className="text-sm text-gray-500">Preparing your avatar...</p>
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3 w-full justify-center">
-                <button
-                  onClick={handleDownloadExistingImage}
-                  disabled={!existingImageUrl}
-                  className="flex items-center justify-center gap-2 rounded-xl sm:rounded-2xl bg-zinc-900 px-6 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base font-semibold text-white transition hover:bg-zinc-800 disabled:opacity-50 min-w-[140px]"
-                >
-                  Download
-                </button>
-              </div>
+                    // If it already failed direct load, don't try again
+                    if (imgElement.getAttribute("data-fallback-failed") === "true") return;
+
+                    if (imgElement.src.includes("proxy-image")) {
+                      console.log("Attempting direct image load fallback...");
+                      imgElement.src = existingImageUrl;
+                    } else {
+                      console.error("Direct image load also failed.");
+                      imgElement.setAttribute("data-fallback-failed", "true");
+                      toast.error("Image could not be loaded. It might be private or expired.");
+                    }
+                  }}
+                />
+              ) : (
+                <div className="flex flex-col items-center gap-2 p-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                  <p className="text-sm text-gray-500">Preparing your avatar...</p>
+                </div>
+              )}
             </div>
+            <div className="flex flex-col sm:flex-row gap-3 w-full justify-center">
+              <button
+                onClick={handleDownloadExistingImage}
+                disabled={!existingImageUrl}
+                className="flex items-center justify-center gap-2 rounded-xl sm:rounded-2xl bg-zinc-900 px-6 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base font-semibold text-white transition hover:bg-zinc-800 disabled:opacity-50 min-w-[140px]"
+              >
+                Download
+              </button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -882,10 +885,10 @@ export function AiModalPop({
             style={{ position: 'fixed' }}
             title="Generate AI Avatar"
           >
-            <img 
-              src="/AI.png" 
-              alt="AI" 
-              className="w-full h-full object-contain" 
+            <img
+              src="/AI.png"
+              alt="AI"
+              className="w-full h-full object-contain"
             />
           </button>
         )}

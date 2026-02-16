@@ -65,7 +65,7 @@ export default function RegistrationModal({
     if (isOpen) {
       document.body.style.overflow = "hidden";
       window.dispatchEvent(new CustomEvent("registration-modal-opened"));
-      
+
       // Reset form and step when opening
       setStep("form");
       setFormData({
@@ -117,7 +117,7 @@ export default function RegistrationModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Form submitted:", formData);
-    
+
     // Client-side phone validation for better mobile UX
     const cc = formData.countryCode.startsWith("+")
       ? formData.countryCode
@@ -305,7 +305,7 @@ export default function RegistrationModal({
 
       // SUCCESS - Call backend registration API
       console.log("Registration successful, calling backend register API");
-      
+
       // Store user data in localStorage for recovery in case of exit
       if (typeof window !== "undefined") {
         const userDataToStore = {
@@ -482,7 +482,7 @@ export default function RegistrationModal({
                   <img
                     src="/assets/images/reg1.png"
                     alt="Register"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-fill"
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
                     }}
@@ -495,7 +495,7 @@ export default function RegistrationModal({
                   <img
                     src="/assets/images/reg1.png"
                     alt="Choose Ticket"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-fill"
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
                     }}
@@ -569,7 +569,7 @@ function RegistrationForm({
             onFocus={() => setFocusedField("name")}
             onBlur={() => setFocusedField(null)}
             className="p-3 w-full lg:w-[85%] border rounded-lg text-gray-700 h-[45px] placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-            style={{ ...getBoxStyle("name")}}
+            style={{ ...getBoxStyle("name") }}
             placeholder="Enter your name"
             required
           />
@@ -588,7 +588,7 @@ function RegistrationForm({
             onFocus={() => setFocusedField("email")}
             onBlur={() => setFocusedField(null)}
             className="p-3 w-full lg:w-[85%] border h-[45px] rounded-lg text-gray-700 placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-            style={{ ...getBoxStyle("email")}}
+            style={{ ...getBoxStyle("email") }}
             placeholder="Enter your email"
             required
           />
@@ -605,7 +605,7 @@ function RegistrationForm({
               value={formData.countryCode}
               onChange={handleChange}
               className="appearance-none w-24 pl-3 pr-2 border rounded-lg text-gray-700 h-[45px] focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              style={{ ...getBoxStyle("countryCode")}}
+              style={{ ...getBoxStyle("countryCode") }}
             >
               <option value="+91">+91</option>
               {allCountries && allCountries.length > 0 ? (
@@ -626,7 +626,7 @@ function RegistrationForm({
               onFocus={() => setFocusedField("phone")}
               onBlur={() => setFocusedField(null)}
               className="flex-1 p-3 border rounded-lg h-[45px] text-gray-700 placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              style={{ ...getBoxStyle("phone")}}
+              style={{ ...getBoxStyle("phone") }}
               placeholder="Enter your number"
               required
             />
@@ -712,7 +712,7 @@ function RegistrationForm({
             onFocus={() => setFocusedField("organization")}
             onBlur={() => setFocusedField(null)}
             className="p-3 w-full lg:w-[85%] border rounded-lg text-gray-700 h-[45px] placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-            style={{ ...getBoxStyle("organization")}}
+            style={{ ...getBoxStyle("organization") }}
             placeholder="Enter your organization"
             required
           />
@@ -765,14 +765,14 @@ function RegistrationForm({
           <p className="text-sm text-gray-600">
             Already have an account?{' '}
             <span
-  onClick={() => {
-    onClose(); // close registration modal
-    window.dispatchEvent(new CustomEvent("open-aipop"));
-  }}
-  className="text-indigo-600 hover:text-indigo-700 cursor-pointer"
->
-  Go here
-</span>
+              onClick={() => {
+                onClose(); // close registration modal
+                window.dispatchEvent(new CustomEvent("open-aipop"));
+              }}
+              className="text-indigo-600 hover:text-indigo-700 cursor-pointer"
+            >
+              Go here
+            </span>
 
           </p>
         </div>
@@ -820,11 +820,10 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
         {/* General Pass Card */}
         <div
           onClick={() => handleSelect("general")}
-          className={`group cursor-pointer transition-all duration-200 rounded-2xl p-5 border-2 ${
-            selectedTicket === "general"
-              ? "border-gray-900 shadow-lg"
-              : "border-gray-300 hover:border-gray-400"
-          }`}
+          className={`group cursor-pointer transition-all duration-200 rounded-2xl p-5 border-2 ${selectedTicket === "general"
+            ? "border-gray-900 shadow-lg"
+            : "border-gray-300 hover:border-gray-400"
+            }`}
           style={{ fontFamily: 'Calsans, sans-serif' }}
         >
           <div className="flex items-center justify-between mb-4">
@@ -846,11 +845,10 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
         {/* VIP Pass Card */}
         <div
           onClick={() => handleSelect("vip")}
-          className={`group cursor-pointer transition-all duration-200 rounded-2xl p-5 border-2 ${
-            selectedTicket === "vip"
-              ? "border-gray-900 shadow-lg"
-              : "border-gray-300 hover:border-gray-400"
-          }`}
+          className={`group cursor-pointer transition-all duration-200 rounded-2xl p-5 border-2 ${selectedTicket === "vip"
+            ? "border-gray-900 shadow-lg"
+            : "border-gray-300 hover:border-gray-400"
+            }`}
           style={{ fontFamily: 'Calsans, sans-serif' }}
         >
           <div className="flex items-center justify-between mb-4">
@@ -945,7 +943,7 @@ function SuccessModal({
   // CRITICAL: Ensure we don't accidentally pick up an avatar URL from the user's data
   const extractTicketOnlyUrl = (data: any): string => {
     if (!data) return "";
-    
+
     // Explicitly check known ticket fields from MakeMyPass first
     const ticketCandidates = [
       data?.response?.image,
@@ -968,12 +966,12 @@ function SuccessModal({
 
     // Fallback: if we find any URL that is NOT a FrameForge avatar, it's likely the ticket
     for (const url of ticketCandidates) {
-       if (typeof url === "string" && url.trim()) {
-         const lowUrl = url.toLowerCase();
-         if (!lowUrl.includes("frameforge") && !lowUrl.includes("/final/") && !lowUrl.includes("/generated/")) {
-           return url.trim();
-         }
-       }
+      if (typeof url === "string" && url.trim()) {
+        const lowUrl = url.toLowerCase();
+        if (!lowUrl.includes("frameforge") && !lowUrl.includes("/final/") && !lowUrl.includes("/generated/")) {
+          return url.trim();
+        }
+      }
     }
 
     return "";
@@ -1007,7 +1005,7 @@ function SuccessModal({
             // If no explicit ticket URL found, but we have a generic image, check it carefully
             const genericImage = data?.image || data?.response?.image;
             if (genericImage && !genericImage.toLowerCase().includes("frameforge")) {
-               setTicketImageUrl(genericImage);
+              setTicketImageUrl(genericImage);
             }
           }
         } else {
