@@ -260,9 +260,17 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       const maxSize = 2 * 1024 * 1024;
 
       if (!allowedTypes.includes(file.type)) {
-        toast.error("Only PNG and JPEG images are allowed.");
-        e.target.value = "";
-        return;
+        const lowerName = (file.name || "").toLowerCase();
+        const hasValidExtension =
+          lowerName.endsWith(".png") ||
+          lowerName.endsWith(".jpg") ||
+          lowerName.endsWith(".jpeg");
+
+        if (!hasValidExtension) {
+          toast.error("Only PNG, JPEG and JPG images are allowed.");
+          e.target.value = "";
+          return;
+        }
       }
 
       if (file.size > maxSize) {
