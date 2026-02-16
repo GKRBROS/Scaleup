@@ -136,7 +136,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     userId: registrationData?.user_id || "",
     name: registrationData?.name || "",
     email: registrationData?.email || "",
-    phone_no: registrationData?.phone_no || "0000000000",
+    phone_no: registrationData?.phone_no || "",
     dialCode: registrationData?.dial_code || "+91",
     district: registrationData?.district || "",
     category: registrationData?.category || "",
@@ -150,7 +150,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         userId: registrationData.user_id || "",
         name: registrationData.name || "",
         email: registrationData.email || "",
-        phone_no: registrationData.phone_no || "0000000000",
+        phone_no: registrationData.phone_no || "",
         dialCode: registrationData.dial_code || "+91",
         district: registrationData.district || "",
         category: registrationData.category || "",
@@ -260,7 +260,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       const maxSize = 2 * 1024 * 1024;
 
       if (!allowedTypes.includes(file.type)) {
-        toast.error("Only PNG and JPEG images are allowed.");
+        toast.error("Only PNG, JPEG and JPG images are allowed.");
         e.target.value = "";
         return;
       }
@@ -568,7 +568,18 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         console.log("Parsed result:", result);
       } catch (parseError) {
         console.error("JSON parse error:", parseError);
-        toast.error("Server returned invalid response. Please try again.");
+        const fallbackUserId = formData.userId || formData.phone_no;
+        if (fallbackUserId) {
+          console.log(`JSON parse error, attempting to poll anyway for ${fallbackUserId}...`);
+          const imageUrl = await fetchGeneratedImageUrl(fallbackUserId, oldImageUrl);
+          if (imageUrl) {
+            setGeneratedImageUrl(imageUrl);
+            setIsGenerated(true);
+            setIsGenerating(false);
+            return;
+          }
+        }
+        toast.error("Server returned invalid response. If your avatar finishes later, it will still be sent to your email and WhatsApp.");
         setIsGenerating(false);
         return;
       }
@@ -626,7 +637,6 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
           setGeneratedImageUrl(imageUrl);
           setIsGenerated(true);
           
-          // Also update DB after polling success
           try {
             await fetch(`https://scaleup.frameforge.one/scaleup2026/user/${encodeURIComponent(pollUserId)}`, {
               method: "PATCH",
@@ -639,13 +649,13 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
             console.error("Failed to update DB after polling:", updateError);
           }
         } else {
-          toast("Image generation is taking longer than expected. Please try again.");
+          toast("Image generation is taking longer than expected. If your avatar finishes later, it will still be sent to your email and WhatsApp.");
         }
         setIsGenerating(false);
         return;
       }
 
-      toast.error("Image generation failed. Please try again.");
+      toast.error("Image generation failed. If this keeps happening, please retry from a stable connection. If the backend still finishes later, your avatar will be delivered to your email and WhatsApp.");
       setIsGenerating(false);
     } catch (error) {
       console.error("Error generating avatar:", error);
@@ -972,7 +982,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                             <input
                               ref={fileInputRef}
                               type="file"
-                              accept="image/jpeg,image/png"
+                              accept="image/jpeg,image/png,image/jpg,.jpeg,.jpg,.png"
                               onChange={handleFileChange}
                               className="hidden"
                             />
