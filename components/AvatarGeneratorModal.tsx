@@ -1144,7 +1144,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                 <div
                   className={cn(
                     "relative w-full h-full overflow-hidden flex flex-col",
-                    "rounded-none lg:rounded-2xl",
+                    "rounded-none",
                     "min-h-[400px] md:min-h-0",
                     isGenerating && "bg-black"
                   )}
@@ -1236,18 +1236,6 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                             }
                           }}
                         />
-
-                        {/* Mobile Download Button */}
-                        {/* {isGenerated && isMobile && (
-                        <button
-                          type="button"
-                          onClick={handleDownload}
-                          className="mt-6 w-full max-w-xs h-11 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2"
-                        >
-                          <Download className="h-4 w-4" />
-                          Download AI Avatar
-                        </button>
-                      )} */}
                       </motion.div>
                     )}
                   </AnimatePresence>
