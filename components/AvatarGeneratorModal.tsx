@@ -486,11 +486,12 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       return;
     }
 
-    if (!formData.name || !formData.email || !formData.organization) {
+    if (!formData.name || !formData.email || !formData.organization || !formData.gender) {
       console.log("Validation failed details:", {
         name: formData.name,
         email: formData.email,
         organization: formData.organization,
+        gender: formData.gender,
         district: formData.district,
         category: formData.category
       });
@@ -499,12 +500,13 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       if (!formData.name) missingFields.push("Name");
       if (!formData.email) missingFields.push("Email");
       if (!formData.organization) missingFields.push("Organization");
+       if (!formData.gender) missingFields.push("Gender");
 
       if (missingFields.length > 0) {
         toast.error(`Please fill the following required fields: ${missingFields.join(", ")}`);
       } else {
         // This case handles where the fields are present but empty/whitespace only
-        toast.error("Please fill all required fields: Name, Email, and Organization");
+        toast.error("Please fill all required fields: Name, Email, Organization, and Gender");
       }
       return;
     }
