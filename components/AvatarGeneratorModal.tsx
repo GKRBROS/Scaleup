@@ -446,7 +446,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     const finalGenerationType = generationType || "superhero";
 
     const fetchGeneratedImageUrl = async (userId: string, currentOldUrl: string) => {
-      const maxAttempts = 60; // Increase to 2 minutes
+      const maxAttempts = 150; // 5 minutes with 2s delay
       const delayMs = 2000;
 
       console.log(`Starting polling for user ${userId}, ignoring old URL: ${currentOldUrl}...`);
@@ -521,7 +521,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
 
-      console.error("Polling timed out after 120 seconds.");
+      console.error("Polling timed out after 300 seconds.");
       return "";
     };
 
