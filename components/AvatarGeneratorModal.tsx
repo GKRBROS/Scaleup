@@ -278,39 +278,101 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     const mapping = {
       superhero: "prompt1",
       professional: "prompt2",
-      medieval: "prompt3"
+      medieval: "prompt3",
     };
     return mapping[type];
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
-      const maxSize = 2 * 1024 * 1024;
-
-      if (!allowedTypes.includes(file.type)) {
-        const lowerName = (file.name || "").toLowerCase();
-        const hasValidExtension =
-          lowerName.endsWith(".png") ||
-          lowerName.endsWith(".jpg") ||
-          lowerName.endsWith(".jpeg");
-
-        if (!hasValidExtension) {
-          toast.error("Only PNG, JPEG and JPG images are allowed.");
-          e.target.value = "";
-          return;
-        }
-      }
-
-      if (file.size > maxSize) {
-        toast.error("Image must be 2MB or smaller.");
-        e.target.value = "";
+  const convertImageToJpeg = (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      if (typeof window === "undefined" || typeof document === "undefined") {
+        resolve(file);
         return;
       }
 
-      setPhotoFile(file);
+      if (!file.type.startsWith("image/")) {
+        resolve(file);
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        const img = new Image();
+
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.naturalWidth || img.width;
+          canvas.height = img.naturalHeight || img.height;
+
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            resolve(file);
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                resolve(file);
+                return;
+              }
+
+              const baseName = (file.name || "photo").replace(/\.[^.]+$/, "");
+              const jpegFile = new File([blob], `${baseName}.jpg`, {
+                type: "image/jpeg",
+              });
+              resolve(jpegFile);
+            },
+            "image/jpeg",
+            0.9
+          );
+        };
+
+        img.onerror = () => {
+          resolve(file);
+        };
+
+        img.src = typeof reader.result === "string" ? reader.result : "";
+      };
+
+      reader.onerror = () => {
+        resolve(file);
+      };
+
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const maxSize = 2 * 1024 * 1024;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Only image files are allowed.");
+      e.target.value = "";
+      return;
     }
+
+    if (file.size > maxSize) {
+      toast.error("Image must be 2MB or smaller.");
+      e.target.value = "";
+      return;
+    }
+
+    const jpegFile = await convertImageToJpeg(file);
+
+    if (jpegFile.size > maxSize) {
+      toast.error("Converted image is too large. Please use a smaller image (2MB max).");
+      e.target.value = "";
+      return;
+    }
+
+    setPhotoFile(jpegFile);
   };
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
