@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -47,6 +47,7 @@ export function AiModalPop({
   onOpenRegistration,
 }: AiModalPopProps) {
   const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showExistingImageModal, setShowExistingImageModal] = useState(false);
   const [existingImageUrl, setExistingImageUrl] = useState("");
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
@@ -210,6 +211,14 @@ export function AiModalPop({
       window.removeEventListener("open-aipop", openAiPop as EventListener);
     };
   }, []);
+
+  // Handle scroll to top when modal state changes on mobile
+  useEffect(() => {
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+    if (isMobile && scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
+  }, [showPhoneModal, otpSent]);
 
 
   useEffect(() => {
@@ -662,13 +671,16 @@ export function AiModalPop({
         <DialogContent
           onPointerDownOutside={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
-          className="fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-[1000] w-[95vw] sm:w-[90vw] md:w-[750px] lg:w-[900px] max-w-[900px] h-auto max-h-[90vh] md:h-[450px] p-0 overflow-hidden rounded-xl [&>button]:text-white"
+          className="z-[1000] w-[95vw] sm:w-[90vw] sm:max-w-none md:w-[700px] lg:w-[800px] xl:w-[900px] max-w-[1100px] h-auto max-h-[90vh] md:h-[450px] p-0 overflow-hidden rounded-xl [&>button]:text-white"
         >
           <VisuallyHidden>
             <DialogTitle>Email Verification</DialogTitle>
           </VisuallyHidden>
 
-          <div className="flex flex-col-reverse md:flex-row h-full">
+          <div
+            ref={scrollContainerRef}
+            className="flex flex-col-reverse md:flex-row h-full overflow-y-auto md:overflow-hidden"
+          >
 
             {/* LEFT SIDE - Forms - Responsive Padding */}
             <div

@@ -939,6 +939,7 @@ function SuccessModal({
   const [guestData, setGuestData] = useState<any>(null);
   const [ticketImageUrl, setTicketImageUrl] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [isImageLoading, setIsImageLoading] = useState(true);
 
   // CRITICAL: Ensure we don't accidentally pick up an avatar URL from the user's data
   const extractTicketOnlyUrl = (data: any): string => {
@@ -1051,36 +1052,47 @@ function SuccessModal({
         )}
 
         {/* Ticket Image Preview */}
-        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-4 mb-6 border border-gray-200">
-          {loading ? (
-            <div className="bg-gray-200 rounded-xl h-64 flex items-center justify-center">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600 mx-auto mb-2"></div>
-                <p className="text-sm text-gray-600">Generating your ticket...</p>
+        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-4 mb-6 border border-gray-200 min-h-[250px] flex flex-col justify-center">
+          {loading || (ticketImageUrl && isImageLoading) ? (
+            <div className="bg-gray-200/50 animate-pulse rounded-xl h-48 sm:h-64 flex flex-col items-center justify-center">
+              <div className="relative">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="h-4 w-4 bg-indigo-100 rounded-full animate-ping"></div>
+                </div>
               </div>
+              <p className="mt-4 text-sm font-medium text-gray-600">
+                {loading ? "Fetching ticket details..." : "Rendering your ticket..."}
+              </p>
             </div>
-          ) : ticketImageUrl ? (
-            <div className="rounded-xl overflow-hidden shadow-lg">
+          ) : null}
+
+          {ticketImageUrl && (
+            <div className={`rounded-xl overflow-hidden shadow-lg transition-all duration-700 ease-in-out ${isImageLoading ? 'opacity-0 scale-95 h-0' : 'opacity-100 scale-100 h-auto'}`}>
               <img
                 src={ticketImageUrl}
                 alt="Your Event Ticket"
                 className="w-full h-auto object-contain"
+                onLoad={() => setIsImageLoading(false)}
                 onError={(e) => {
                   console.error("Failed to load ticket image:", ticketImageUrl);
+                  setIsImageLoading(false);
                   e.currentTarget.style.display = 'none';
                   const parent = e.currentTarget.parentElement;
                   if (parent) {
-                    parent.innerHTML = `<div class="bg-gray-200 rounded-xl h-64 flex items-center justify-center">
+                    parent.innerHTML = `<div class="bg-gray-200 rounded-xl h-64 flex items-center justify-center px-6 text-center">
                       <p class="text-gray-600 text-sm">Ticket image unavailable. Check your email for the ticket.</p>
                     </div>`;
                   }
                 }}
               />
             </div>
-          ) : (
+          )}
+
+          {!loading && !ticketImageUrl && !isImageLoading && (
             <div className="bg-gray-200 rounded-xl h-64 flex items-center justify-center">
               <div className="text-center px-4">
-                <p className="text-gray-600 text-sm mb-2">Ticket image not available</p>
+                <p className="text-gray-600 text-sm mb-2 font-medium">Ticket image not available</p>
                 <p className="text-gray-500 text-xs">Your ticket has been sent to your email</p>
               </div>
             </div>
