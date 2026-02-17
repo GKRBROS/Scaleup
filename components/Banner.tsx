@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 
 function Banner() {
   return (
@@ -31,24 +32,30 @@ function Banner() {
                 textDecoration: "none",
               }}
             >
-              <img
+              <Image
                 src="/assets/images/whatsapp.svg"
                 alt="WhatsApp"
+                width={20}
+                height={20}
                 className="h-5 w-5"
               />
               <span className="font-gilmer font-medium text-sm md:text-base">
                 Join Whatsapp
               </span>
-              <img
+              <Image
                 src="/assets/images/arrow_icon_blue.svg"
                 alt="arrow"
-                className="absolute right-1 h-[30px] w-15" 
+                width={60}
+                height={30}
+                className="absolute right-1 h-[30px] w-auto"
               />
             </a>
 
-            <img
+            <Image
               src="/assets/images/img_icons.svg"
               alt=""
+              width={80}
+              height={80}
               className="w-16 sm:w-20"
             />
           </div>
@@ -56,9 +63,11 @@ function Banner() {
 
         {/* Right Image */}
         <div className="relative md:w-1/2 w-full flex justify-center md:justify-end mt-6 md:mt-0">
-          <img
+          <Image
             src="/assets/images/banner_img.png"
             alt="img"
+            width={600}
+            height={400}
             className="w-full max-w-sm md:max-w-md lg:max-w-lg h-auto object-contain"
           />
         </div>

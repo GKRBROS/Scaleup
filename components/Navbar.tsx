@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 
 function Navbar() {
   return (
@@ -12,10 +13,12 @@ function Navbar() {
         <div className="flex justify-between items-center">
           {/* Left Logo */}
           <div className="flex items-center">
-            <img
+            <Image
               src="/assets/images/icon.svg"
               alt="ScaleUp 2025"
-              className="h-6 md:h-10"
+              width={150}
+              height={40}
+              className="h-6 md:h-10 w-auto"
             />
           </div>
 
@@ -43,16 +46,18 @@ function Navbar() {
               href="https://dubai.scaleupconclave.com/"
               className="underline font-bold"
             >
-            Dubai
+              Dubai
             </a>
           </div>
 
           {/* Right Logo */}
           <div className="flex items-center">
-            <img
+            <Image
               src="/assets/images/ai_summit_blue.svg"
               alt="The AI Summit"
-              className="h-6 md:h-10"
+              width={150}
+              height={40}
+              className="h-6 md:h-10 w-auto"
             />
           </div>
         </div>
