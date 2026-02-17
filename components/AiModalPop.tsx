@@ -671,7 +671,7 @@ export function AiModalPop({
         <DialogContent
           onPointerDownOutside={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
-          className="z-[1000] w-[95vw] sm:w-[90vw] sm:max-w-none md:w-[700px] lg:w-[800px] xl:w-[900px] max-w-[1100px] h-auto max-h-[90vh] md:h-[450px] p-0 overflow-hidden rounded-xl [&>button]:text-white"
+          className="z-[1000] w-[95vw] sm:w-[90vw] sm:max-w-none md:w-[700px] lg:w-[800px] xl:w-[900px] max-w-[1100px] h-auto max-h-[90vh] md:h-[450px] p-0 overflow-hidden rounded-xl [&>button]:text-white [&>button]:bg-black/20 [&>button]:hover:bg-red-600 [&>button]:transition-colors"
         >
           <VisuallyHidden>
             <DialogTitle>Email Verification</DialogTitle>
@@ -691,12 +691,23 @@ export function AiModalPop({
               {!otpSent ? (
                 <>
                   <div className="space-y-3 w-full">
-                    <p style={{ fontFamily: 'Calsans, sans-serif' }} className="text-sm md:text-base font-medium text-red-600 block bg-red-50 p-3 rounded-lg border border-red-100">
-                      You only have one generation so please use a good photo with proper lighting and direct angles.
+                    <p className="text-sm text-gray-600 font-bold">
+                      If you’re already registered and haven’t generated an avatar, please enter your registered email ID below.
                     </p>
-                    <label className="text-xs sm:text-sm font-medium text-gray-700 block">
-                      Email Address
-                    </label>
+                    <div className="flex flex-wrap justify-between items-center gap-2">
+                      <label className="text-xs sm:text-sm font-medium text-gray-700 block whitespace-nowrap">
+                        Email Address
+                      </label>
+                      <button
+                        onClick={() => {
+                          if (onOpenRegistration) onOpenRegistration();
+                          setShowPhoneModal(false);
+                        }}
+                        className="text-indigo-600 font-medium text-[10px] sm:text-xs underline hover:cursor-pointer text-right flex-1 sm:flex-none"
+                      >
+                        Not registered yet? Book now
+                      </button>
+                    </div>
                     <div className="flex gap-2">
                       <input
                         type="email"
@@ -796,7 +807,7 @@ export function AiModalPop({
                 <img
                   src="/assets/images/reg1.png"
                   alt="Register"
-                  className="w-full h-full object-cover object-top"
+                  className="w-full h-full object-cover"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                   }}
