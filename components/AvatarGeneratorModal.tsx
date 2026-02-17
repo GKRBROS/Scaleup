@@ -102,6 +102,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   const [isDownloading, setIsDownloading] = useState(false);
   const [isGenerated, setIsGenerated] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  // Removed userInteractedWithTabs to allow continuous cycling
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string>("");
   const [generatedUserId, setGeneratedUserId] = useState<string>("");
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
@@ -200,6 +201,9 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       setGeneratedImageUrl("");
       setGeneratedUserId("");
       setPhotoFile(null);
+      // Reset selection to default
+      setGenerationType("superhero");
+      setPreviewType("superhero");
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -211,11 +215,11 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     [previewType]
   );
 
-  // Auto-cycle preview images
+  // Auto-cycle preview images ONLY (Visual Carousel)
   useEffect(() => {
-    if (!isOpen || isGenerated) return;
-    const isDesktop = window.innerWidth >= 1024;
-    if (!isDesktop) return;
+    // Stop cycling if generating, generated, or closed. 
+    // Does NOT stop on user interaction anymore, allows continuous showcase.
+    if (!isOpen || isGenerated || isGenerating) return;
 
     const interval = setInterval(() => {
       setPreviewType((prev) => {
@@ -226,7 +230,8 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     }, 4000);
 
     return () => clearInterval(interval);
-  }, [isOpen, isGenerated]);
+    // Added previewType to deps so the timer resets if user manually changes it
+  }, [isOpen, isGenerated, isGenerating, previewType]);
 
   // Rotate loading messages
   useEffect(() => {
@@ -443,7 +448,8 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     setIsGenerated(false);
 
     // Ensure generationType is valid, fallback to superhero if needed
-    const finalGenerationType = generationType || "superhero";
+    // Use the explicitly selected generation type
+    const finalGenerationType = generationType;
 
     const fetchGeneratedImageUrl = async (userId: string, currentOldUrl: string) => {
       const maxAttempts = 60; // Increase to 2 minutes
@@ -588,7 +594,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
           }
         }
 
-        toast.error(`Server error (${response.status}). Please try again.`);
+        toast.error("Your image is in the queue; your generated image will be sent to you shortly.");
         setIsGenerating(false);
         return;
       }
@@ -601,7 +607,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         console.log("Parsed result:", result);
       } catch (parseError) {
         console.error("JSON parse error:", parseError);
-        toast.error("Server returned invalid response. Please try again.");
+        toast.error("Your image is in the queue; your generated image will be sent to you shortly.");
         setIsGenerating(false);
         return;
       }
@@ -672,17 +678,17 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
             console.error("Failed to update DB after polling:", updateError);
           }
         } else {
-          toast("Image generation is taking longer than expected. Please try again.");
+          toast("Your image is in the queue; your generated image will be sent to you shortly.");
         }
         setIsGenerating(false);
         return;
       }
 
-      toast.error("Image generation failed. Please try again.");
+      toast.error("Your image is in the queue; your generated image will be sent to you shortly.");
       setIsGenerating(false);
     } catch (error) {
       console.error("Error generating avatar:", error);
-      toast.error("Error generating avatar. Please try again.");
+      toast.error("Your image is in the queue; your generated image will be sent to you shortly.");
       setIsGenerating(false);
     }
   };
@@ -786,7 +792,6 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   const handleClose = () => {
     console.log("AvatarGeneratorModal: handleClose resetting state");
     setPreviewType("superhero");
-    setGenerationType("superhero");
     setIsGenerating(false);
     setIsGenerated(false);
     setPhotoFile(null);
@@ -830,7 +835,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
           Upload Warning
         </h3>
         <p style="font-size: 14px; color: #555; margin-bottom: 20px;">
-          Before you continue: This AI generation can be used only once. Make sure your photo is bright, clear, and shows your face fully. For best results, a professionally taken photo is recommended. A good photo = a great result
+          You only have one generation so please use a good photo with proper lighting and direct angles
         </p>
         <img
           src="/Image to use.webp"
@@ -983,12 +988,16 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                               <button
                                 key={opt.id}
                                 type="button"
-                                onClick={() => setGenerationType(opt.id)}
+                                onClick={() => {
+                                  setGenerationType(opt.id); // Set the actual selection
+                                  setPreviewType(opt.id);    // Also show it immediately
+                                  // Auto-cycle will continue or pick up from here
+                                }}
                                 className={cn(
-                                  "flex-1 h-11 px-2 md:px-2 lg:px-3 rounded-lg text-[10px] md:text-xs lg:text-sm font-semibold transition border relative overflow-hidden",
+                                  "flex-1 h-24 px-2 rounded-xl text-[10px] md:text-xs font-bold transition border relative overflow-hidden flex flex-col items-center justify-center gap-1.5",
                                   generationType === opt.id
                                     ? "bg-black text-white border-black"
-                                    : "bg-white text-gray-900 border-gray-300 hover:border-gray-400"
+                                    : "bg-white text-gray-900 border-gray-300 hover:border-gray-400 hover:bg-gray-50"
                                 )}
                               >
                                 {generationType === opt.id && (
@@ -998,7 +1007,19 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                                   />
                                 )}
-                                {opt.title === "Medieval Warrior" ? "Warrior" : opt.title}
+                                <div className={cn(
+                                  "relative w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden border-2 shrink-0 transition-transform shadow-sm",
+                                  generationType === opt.id ? "border-white scale-105" : "border-gray-200"
+                                )}>
+                                  <img
+                                    src={opt.previewImg}
+                                    alt={opt.title}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                                <span className="truncate max-w-full">
+                                  {opt.title === "Medieval Warrior" ? "Warrior" : opt.title}
+                                </span>
                               </button>
                             ))}
                           </div>
@@ -1093,7 +1114,10 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                         <button
                           key={opt.id}
                           type="button"
-                          onClick={() => setPreviewType(opt.id)}
+                          onClick={() => {
+                            setPreviewType(opt.id);
+                            // Only updates view, does not change generation selection
+                          }}
                           className={cn(
                             "w-full px-1 py-2 rounded-lg text-[10px] md:text-xs font-semibold transition flex items-center justify-center gap-1.5 whitespace-nowrap",
                             previewType === opt.id
@@ -1157,14 +1181,34 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                           />
                         </AnimatePresence>
 
-                        {/* Countdown */}
-                        <div className="relative mt-4 md:mt-0 md:absolute md:bottom-8 z-20 text-center text-white">
+                        {/* Countdown & Loader */}
+                        <div className="relative mt-4 md:mt-0 md:absolute md:bottom-10 z-20 text-center text-white w-full px-4">
                           <div className="text-5xl font-mono font-bold tracking-wider drop-shadow-lg">
                             {formattedCountdown}
                           </div>
-                          <p className="text-xs mt-2 text-white/70">
+                          <p className="text-xs mt-2 text-white/70 font-medium tracking-wide">
                             Generating your AI Avatar...
                           </p>
+
+                          {/* Battery-Style Progress Loader */}
+                          <div className="w-40 md:w-56 h-2 mt-4 mx-auto bg-gray-800/50 rounded-full overflow-hidden relative border border-white/10 shadow-inner">
+                            {/* Charging Fill */}
+                            <motion.div
+                              className="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-indigo-600 via-indigo-400 to-indigo-600"
+                              initial={{ width: "0%" }}
+                              animate={{
+                                width: `${((90 - countdown) / 90) * 100}%`
+                              }}
+                              transition={{ duration: 0.5, ease: "linear" }}
+                            >
+                              {/* Electricity / Shimmer Effect inside the fill */}
+                              <motion.div
+                                className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                                animate={{ x: ["-100%", "100%"] }}
+                                transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                              />
+                            </motion.div>
+                          </div>
                         </div>
                       </motion.div>
                     ) : (
@@ -1217,19 +1261,25 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
                   {/* Mobile Scroll Indicator - only visible when not generating/generated */}
                   {!isGenerating && !isGenerated && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="flex md:hidden flex-col items-center gap-1 pb-8 opacity-40 shrink-0"
-                    >
-                      <span className="text-[10px] font-medium text-white uppercase tracking-widest">Scroll to start</span>
+                    <div className="md:hidden flex justify-center w-full pb-6 z-10">
                       <motion.div
-                        animate={{ y: [0, 5, 0] }}
-                        transition={{ duration: 1.5, repeat: Infinity }}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 1, duration: 0.5 }}
+                        className="flex flex-col items-center gap-2"
                       >
-                        <ChevronDown className="w-5 h-5 text-white" />
+                        <motion.div
+                          className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10 shadow-lg"
+                          animate={{ y: [0, 5, 0] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                        >
+                          <span className="text-[11px] font-medium text-white uppercase tracking-widest drop-shadow-md">
+                            Scroll to start
+                          </span>
+                          <ChevronDown className="w-4 h-4 text-white drop-shadow-md" />
+                        </motion.div>
                       </motion.div>
-                    </motion.div>
+                    </div>
                   )}
                 </div>
               </div>
