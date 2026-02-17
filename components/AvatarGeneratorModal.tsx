@@ -162,7 +162,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   const normalizeGender = (value: string): string => {
     const v = (value || "").toLowerCase();
     if (v === "male" || v === "female" || v === "neutral") return v;
-    return "";
+    return v;
   };
 
   const [formData, setFormData] = useState({
