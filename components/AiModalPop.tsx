@@ -691,9 +691,8 @@ export function AiModalPop({
               {!otpSent ? (
                 <>
                   <div className="space-y-3 w-full">
-                    <p style={{ fontFamily: 'Calsans, sans-serif' }} className="text-xs sm:text-sm font-medium text-gray-700 block">
-                      Your email address helps us verify your registration status and ensure a smooth experience.
-                      Once verified, we’ll direct you to the right step—whether it’s registration, AI image generation, or downloading created assets.
+                    <p style={{ fontFamily: 'Calsans, sans-serif' }} className="text-sm md:text-base font-medium text-red-600 block bg-red-50 p-3 rounded-lg border border-red-100">
+                      You only have one generation so please use a good photo with proper lighting and direct angles.
                     </p>
                     <label className="text-xs sm:text-sm font-medium text-gray-700 block">
                       Email Address
@@ -797,7 +796,7 @@ export function AiModalPop({
                 <img
                   src="/assets/images/reg1.png"
                   alt="Register"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover object-top"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                   }}

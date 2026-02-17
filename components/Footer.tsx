@@ -50,13 +50,14 @@ function Footer() {
           width={1200}
           height={200}
           className="absolute bottom-0 left-0 w-full h-auto z-0 select-none"
+          loading="lazy"
         />
 
         <div className="relative z-10 p-8 md:p-12">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
             {/* --- Right section (AI Summit + Location + Map for desktop) --- */}
             <div className="order-1 md:order-2 flex flex-col items-start md:items-end gap-5 text-left md:text-right">
-              <img
+              <Image
                 className="ml-43 w-30"
                 src="/assets/images/ai_summit_icon.svg"
                 alt="The AI Summit logo"

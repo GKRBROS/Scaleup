@@ -1,6 +1,7 @@
 "use client";
 import { ChevronRight } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 
 import Registration from "./Registration";
 import AiModalPop from "./AiModalPop";
@@ -32,9 +33,11 @@ function Hero() {
           >
             ScaleUp Conclave
           </span>
-          <img
+          <Image
             src="/assets/images/v.svg"
             alt="icon"
+            width={60}
+            height={60}
             className="inline-block w-5 h-5 md:w-[60px] md:h-[60px] pl-2"
           />
         </h1>
@@ -52,7 +55,7 @@ function Hero() {
           </span>{" "}
           <span
             className="font-gilmer tracking-tight sm:text-[56.63px] md:text-[100px] lg:text-[150px] xl:text-[190px]"
-            // style={{ fontWeight: "700" }}
+          // style={{ fontWeight: "700" }}
           >
             Ai Summit
           </span>
@@ -68,9 +71,11 @@ function Hero() {
       >
         {/* Top Right Icon */}
         <div className="absolute top-6 right-6 md:hidden">
-          <img
+          <Image
             src="/assets/images/img_icon2.svg"
             alt="icons"
+            width={120}
+            height={120}
             className="w-16 sm:w-10 md:w-[120px]"
           />
         </div>
@@ -180,9 +185,11 @@ function Hero() {
         <div className="mt-8 md:mt-0 w-[581px] hidden lg:flex flex-col items-center">
           {/* Top Icon */}
           <div className="hidden md:flex justify-center mb-3">
-            <img
+            <Image
               src="/assets/images/img_icon2.svg"
               alt="icons"
+              width={120}
+              height={120}
               className="mt-22 w-16 sm:w-10 md:w-[120px]"
             />
           </div>
