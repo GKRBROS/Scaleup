@@ -350,7 +350,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const maxSize = 2 * 1024 * 1024;
+    const maxSize = 5 * 1024 * 1024;
 
     if (!file.type.startsWith("image/")) {
       toast.error("Only image files are allowed.");
@@ -359,7 +359,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     }
 
     if (file.size > maxSize) {
-      toast.error("Image must be 2MB or smaller.");
+      toast.error("Image must be 5MB or smaller.");
       e.target.value = "";
       return;
     }
@@ -367,7 +367,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     const jpegFile = await convertImageToJpeg(file);
 
     if (jpegFile.size > maxSize) {
-      toast.error("Converted image is too large. Please use a smaller image (2MB max).");
+      toast.error("Converted image is too large. Please use a smaller image (5MB max).");
       e.target.value = "";
       return;
     }

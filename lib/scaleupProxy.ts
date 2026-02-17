@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const MAX_IMAGE_SIZE = 2 * 1024 * 1024;
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/jpg"];
 
 const REQUIRED_FIELDS = [
@@ -67,7 +67,7 @@ export const handleGenerateProxy = async (request: NextRequest) => {
     return NextResponse.json(
       {
         error: "Image file too large",
-        details: `Maximum file size is 2MB. Current size: ${(photo.size / (1024 * 1024)).toFixed(2)}MB`,
+        details: `Maximum file size is 5MB. Current size: ${(photo.size / (1024 * 1024)).toFixed(2)}MB`,
       },
       { status: 400 }
     );
