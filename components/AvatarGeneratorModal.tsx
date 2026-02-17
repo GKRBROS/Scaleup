@@ -118,10 +118,27 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Handle scroll to top when modal state changes on mobile
+  // Handle scroll position when modal state changes on mobile
   useEffect(() => {
     if (isMobile && scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = 0;
+      // Use requestAnimationFrame to ensure the scroll happens after layout settles
+      requestAnimationFrame(() => {
+        const container = scrollContainerRef.current;
+        if (!container) return;
+
+        if (isGenerated) {
+          // Scroll to BOTTOM in success state to show download button
+          // Add a small delay to ensure the image has also begun rendering
+          setTimeout(() => {
+            if (scrollContainerRef.current) {
+              scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+            }
+          }, 100);
+        } else {
+          // Scroll to TOP for initial and generating states
+          container.scrollTop = 0;
+        }
+      });
     }
   }, [isOpen, isGenerating, isGenerated, isMobile]);
 
@@ -903,13 +920,13 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
             {/* Scrollable Content Wrapper */}
             <div
               ref={scrollContainerRef}
-              className="w-full h-full flex flex-col-reverse md:flex-row overflow-y-auto md:overflow-hidden"
+              className="w-full h-full flex flex-col md:flex-row overflow-y-auto md:overflow-hidden"
             >
 
               {/* LEFT SIDE - Form */}
               <div
                 className={cn(
-                  "w-full md:w-1/2 p-4 md:p-12 bg-white transition-all duration-300 md:overflow-y-auto",
+                  "w-full md:w-1/2 p-4 md:p-12 bg-white transition-all duration-300 md:overflow-y-auto order-2 md:order-1",
                   isGenerating && "pointer-events-none blur-sm lg:blur-0 lg:pointer-events-auto"
                 )}
               >
@@ -1036,12 +1053,12 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                       animate={{ opacity: 1 }}
                     >
                       <h1
-                        className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2 pt-2"
+                        className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-1 pt-2"
                         style={{ fontFamily: 'Calsans, sans-serif' }}
                       >
                         Awesome your AI avatar has been generated
                       </h1>
-                      <p className="text-sm text-gray-600 mb-6">
+                      <p className="text-xs md:text-sm text-gray-600 mb-4">
                         Great news! Your AI Avatar has been sent to your email and WhatsApp. Feel free to share with your friends and on social networks.
                       </p>
 
@@ -1062,8 +1079,8 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
               {/* RIGHT SIDE - Image Preview */}
               <div
                 className={cn(
-                  "relative flex-col bg-gray-900",
-                  "flex w-full md:w-1/2 md:static md:z-auto",
+                  "relative flex-col bg-gray-900 border-b md:border-b-0",
+                  "flex w-full md:w-1/2 md:static md:z-auto order-1 md:order-2",
                   // Only add padding if NOT generating (allows full bleed for loading state)
                   !isGenerating && "p-4 lg:p-6"
                 )}
@@ -1165,7 +1182,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                               : activeOption.previewImg
                           }
                           alt="Avatar preview"
-                          className="max-h-[50vh] md:max-h-[75vh] max-w-full object-contain rounded-2xl shadow-2xl"
+                          className="max-h-[42vh] md:max-h-[75vh] max-w-full object-contain rounded-2xl shadow-2xl"
                           onError={(e) => {
                             console.error("Image load failed for URL:", generatedImageUrl);
                             e.currentTarget.src = activeOption.previewImg;
@@ -1193,10 +1210,27 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
                   {/* Bottom branding */}
                   <div className={cn(
-                    "pt-4 text-center text-xs shrink-0 pb-6 md:pb-8 text-gray-500 opacity-50"
+                    "pt-4 text-center text-xs shrink-0 pb-4 text-gray-500 opacity-50"
                   )}>
                     Created using FrameForge.one
                   </div>
+
+                  {/* Mobile Scroll Indicator - only visible when not generating/generated */}
+                  {!isGenerating && !isGenerated && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="flex md:hidden flex-col items-center gap-1 pb-8 opacity-40 shrink-0"
+                    >
+                      <span className="text-[10px] font-medium text-white uppercase tracking-widest">Scroll to start</span>
+                      <motion.div
+                        animate={{ y: [0, 5, 0] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                      >
+                        <ChevronDown className="w-5 h-5 text-white" />
+                      </motion.div>
+                    </motion.div>
+                  )}
                 </div>
               </div>
             </div>
