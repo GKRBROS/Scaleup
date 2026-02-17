@@ -95,6 +95,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   registrationData,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [previewType, setPreviewType] = useState<GenerationType>("superhero");
   const [generationType, setGenerationType] = useState<GenerationType>("superhero");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -116,6 +117,13 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  // Handle scroll to top when modal state changes on mobile
+  useEffect(() => {
+    if (isMobile && scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
+  }, [isOpen, isGenerating, isGenerated, isMobile]);
 
   useEffect(() => {
     if (isOpen) {
@@ -893,7 +901,10 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
             </button>
 
             {/* Scrollable Content Wrapper */}
-            <div className="w-full h-full flex flex-col-reverse md:flex-row overflow-y-auto md:overflow-hidden">
+            <div
+              ref={scrollContainerRef}
+              className="w-full h-full flex flex-col-reverse md:flex-row overflow-y-auto md:overflow-hidden"
+            >
 
               {/* LEFT SIDE - Form */}
               <div
@@ -1124,7 +1135,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                             className="
                             relative md:absolute md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2
                             z-10 max-h-[60%] w-auto md:max-h-[75%] md:max-w-[80%]
-                            object-contain rounded-2xl shadow-2xl
+                            object-contain rounded-2xl shadow-2xl p-2
                           "
                           />
                         </AnimatePresence>
@@ -1182,8 +1193,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
                   {/* Bottom branding */}
                   <div className={cn(
-                    "pt-4 text-center text-xs shrink-0 pb-6 md:pb-8",
-                    isGenerating ? "text-white/60" : "text-white/60 md:text-gray-500"
+                    "pt-4 text-center text-xs shrink-0 pb-6 md:pb-8 text-gray-500 opacity-50"
                   )}>
                     Created using FrameForge.one
                   </div>
