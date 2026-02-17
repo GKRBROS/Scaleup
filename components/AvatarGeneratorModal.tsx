@@ -19,6 +19,7 @@ import { toast } from "react-hot-toast";
 interface AvatarRegistrationData {
   user_id?: string;
   name: string;
+  gender?: string;
   email: string;
   phone_no?: string;
   dial_code?: string;
@@ -161,6 +162,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
   const [formData, setFormData] = useState({
     userId: registrationData?.user_id || "",
     name: registrationData?.name || "",
+    gender: registrationData?.gender || "",
     email: registrationData?.email || "",
     phone_no: registrationData?.phone_no || "0000000000",
     dialCode: registrationData?.dial_code || "+91",
@@ -175,6 +177,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       setFormData({
         userId: registrationData.user_id || "",
         name: registrationData.name || "",
+        gender: registrationData.gender || "",
         email: registrationData.email || "",
         phone_no: registrationData.phone_no || "0000000000",
         dialCode: registrationData.dial_code || "+91",
@@ -539,6 +542,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         apiFormData.append("dial_code", formData.dialCode);
       }
       apiFormData.append("name", formData.name);
+      apiFormData.append("gender", formData.gender);
       apiFormData.append("email", formData.email);
       apiFormData.append("phone_no", formData.phone_no);
       apiFormData.append("district", formData.district);
@@ -968,6 +972,26 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
                         <div>
                           <label className="block text-sm font-semibold text-gray-900 mb-1.5">
+                            Gender
+                          </label>
+                          <div className="relative">
+                            <select
+                              name="gender"
+                              value={formData.gender}
+                              onChange={handleFormChange}
+                              className="w-full h-11 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition appearance-none cursor-pointer"
+                            >
+                              <option value="" disabled>Select your gender</option>
+                              <option value="Male">Male</option>
+                              <option value="Female">Female</option>
+                              <option value="Neutral">Neutral</option>
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-900 mb-1.5">
                             School / College / Organization
                           </label>
                           <input
@@ -1235,7 +1259,8 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                               toast.error("Failed to load generated avatar. Please try downloading it.");
                             }
                           }}
-                        />
+                        />Register Now!
+                        Secure your spot and be part of the excitement! Register now to receive your entry pass.
                       </motion.div>
                     )}
                   </AnimatePresence>
