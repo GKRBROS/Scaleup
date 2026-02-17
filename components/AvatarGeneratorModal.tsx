@@ -159,10 +159,16 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     };
   }, [isOpen]);
 
+  const normalizeGender = (value: string): string => {
+    const v = (value || "").toLowerCase();
+    if (v === "male" || v === "female" || v === "neutral") return v;
+    return "";
+  };
+
   const [formData, setFormData] = useState({
     userId: registrationData?.user_id || "",
     name: registrationData?.name || "",
-    gender: registrationData?.gender || "",
+    gender: normalizeGender(registrationData?.gender || ""),
     email: registrationData?.email || "",
     phone_no: registrationData?.phone_no || "0000000000",
     dialCode: registrationData?.dial_code || "+91",
@@ -177,7 +183,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       setFormData({
         userId: registrationData.user_id || "",
         name: registrationData.name || "",
-        gender: registrationData.gender || "",
+        gender: normalizeGender(registrationData.gender || ""),
         email: registrationData.email || "",
         phone_no: registrationData.phone_no || "0000000000",
         dialCode: registrationData.dial_code || "+91",
@@ -1044,9 +1050,9 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                               className="w-full h-11 px-4 rounded-lg border border-gray-300 bg-white text-gray-900 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition appearance-none cursor-pointer"
                             >
                               <option value="" disabled>Select your gender</option>
-                              <option value="Male">Male</option>
-                              <option value="Female">Female</option>
-                              <option value="Neutral">Neutral</option>
+                              <option value="male">Male</option>
+                              <option value="female">Female</option>
+                              <option value="neutral">Neutral</option>
                             </select>
                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                           </div>
