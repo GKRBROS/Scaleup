@@ -23,17 +23,47 @@ export default function AdminPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [previewUser, setPreviewUser] = useState<FlushPreviewUser | null>(null);
   const [hasPreview, setHasPreview] = useState(false);
-  const adminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || "scaleup@26";
+  const adminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
+  const adminPasswordHash = process.env.NEXT_PUBLIC_ADMIN_PASSWORD_HASH || "";
 
-  const handleAuthSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password === adminPassword) {
-      toast.success("Login successful");
-      setStep("email");
-      setPassword("");
-      return;
+  const hashPassword = async (value: string): Promise<string> => {
+    if (typeof window === "undefined" || !window.crypto?.subtle) {
+      return value;
     }
-    toast.error("Invalid admin password");
+    const encoder = new TextEncoder();
+    const data = encoder.encode(value);
+    const digest = await window.crypto.subtle.digest("SHA-256", data);
+    const hashArray = Array.from(new Uint8Array(digest));
+    const hashHex = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+    return hashHex;
+  };
+
+  const handleAuthSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (adminPasswordHash) {
+        const inputHash = await hashPassword(password);
+        if (inputHash === adminPasswordHash) {
+          toast.success("Login successful");
+          setStep("email");
+          setPassword("");
+          return;
+        }
+        toast.error("Invalid admin password");
+        return;
+      }
+
+      if (adminPassword && password === adminPassword) {
+        toast.success("Login successful");
+        setStep("email");
+        setPassword("");
+        return;
+      }
+
+      toast.error("Invalid admin password");
+    } catch {
+      toast.error("Unable to verify admin password");
+    }
   };
 
   const handleFetchPreview = async () => {
