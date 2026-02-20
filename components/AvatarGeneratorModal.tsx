@@ -1185,6 +1185,18 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
                         <Download className="h-4 w-4" />
                         Download AI Avatar
                       </button>
+
+                      <div className="mt-3 p-3 bg-yellow-50 border-l-4 border-yellow-500 text-xs md:text-sm">
+                        <span className="font-semibold">Note:</span> AI-generated results may have errors due to image quality, lighting, or technical glitches. If you face any issues, please share your registered email ID via WhatsApp&nbsp;
+                        <a
+                          href="https://wa.me/919048170077"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-green-600 font-semibold underline"
+                        >
+                          Click here
+                        </a>.
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
