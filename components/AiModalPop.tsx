@@ -348,34 +348,23 @@ export function AiModalPop({
 
       // Handle response based on status
       if (makemypassRes.status === 400) {
-        // User exists but needs verification -> Redirect to OTP verification
-        // Call /scaleup2026/otp/generate endpoint to create OTP
-        const otpRes = await fetch("https://scaleup.frameforge.one/scaleup2026/otp/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: mail,
-            phone_no: avatarRegistrationData?.phone_no || "0000000000",
-          }),
-        });
+        // User exists but needs verification -> Bypassing OTP as per user request
+        toast.success("Email verified! Opening generator...");
 
-        const otpData = await otpRes.json().catch(() => ({}));
-
-        if (otpRes.ok) {
-          setOtpSent(true);
-          setTimeLeft(600);
-          toast.success("OTP sent to your email");
-        } else {
-          console.error("Failed to send OTP", otpData);
-          if (otpRes.status === 404) {
-            toast.error("Email not registered. Please register first.");
-            if (onOpenRegistration) {
-              onOpenRegistration();
-              setShowPhoneModal(false);
-            }
+        // Directly open avatar generator for registered users
+        // Attempt to find user by email to get their user_id and other details if possible
+        try {
+          const searchRes = await fetch(`https://scaleup.frameforge.one/scaleup2026/user/search?email=${encodeURIComponent(mail)}`);
+          if (searchRes.ok) {
+            const searchData = await searchRes.json();
+            handleOpenAvatarGenerator(searchData.user || searchData);
           } else {
-            toast.error(otpData.error || "Failed to send OTP. Please try again.");
+            // Fallback: Continue with just the email
+            handleOpenAvatarGenerator({ email: mail });
           }
+        } catch (e) {
+          console.error("Error searching for user:", e);
+          handleOpenAvatarGenerator({ email: mail });
         }
       } else if (makemypassRes.status === 404 || makemypassRes.status === 200) {
         // User not registered -> Redirect to registration form
@@ -405,6 +394,7 @@ export function AiModalPop({
     }
   };
 
+  /*
   const handleVerifyOtp = async () => {
     console.log("handleVerifyOtp called with OTP:", otp);
     if (!otp || !otp.trim()) {
@@ -500,6 +490,7 @@ export function AiModalPop({
   const handleResendOtp = () => {
     handleSendMail();
   };
+  */
 
   const handleOpenAvatarGenerator = (userData?: any) => {
     console.log("handleOpenAvatarGenerator called with userData:", userData);
@@ -664,7 +655,6 @@ export function AiModalPop({
 
   return (
     <>
-      <Toaster position="top-center" reverseOrder={false} />
 
       {/* Email & OTP Modal - Fully Responsive */}
       <Dialog open={showPhoneModal} onOpenChange={handleClosePhoneModal}>
@@ -722,11 +712,12 @@ export function AiModalPop({
                       disabled={loading}
                       className="w-full px-4 py-2 sm:py-2.5 text-sm sm:text-base rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {loading ? "Sending..." : "Get Code"}
+                      {loading ? "Verifying..." : "Verify & Continue"}
                     </button>
                   </div>
                 </>
               ) : (
+                /* OTP flow commented out as per user request
                 <>
                   <div className="space-y-4 w-full">
                     <div className="flex flex-col gap-1">
@@ -797,6 +788,8 @@ export function AiModalPop({
                     </div>
                   </div>
                 </>
+                */
+                null
               )}
 
             </div>

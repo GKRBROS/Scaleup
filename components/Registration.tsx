@@ -513,7 +513,6 @@ export default function RegistrationModal({
         </div>
       </div>
 
-      <Toaster position="top-center" reverseOrder={false} />
       {showPhoneModal && <AiModalPop />}
     </>
   );
