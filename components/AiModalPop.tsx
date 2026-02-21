@@ -296,6 +296,74 @@ export function AiModalPop({
     }
   };
 
+  const fetchAvatarByEmail = async (email: string) => {
+    try {
+      const response = await fetch(
+        `https://scaleup.frameforge.one/scaleup2026/user/by-email?email=${encodeURIComponent(
+          email.trim(),
+        )}`,
+      );
+
+      const data = await response.json().catch(() => ({}));
+
+      if (response.ok) {
+        const rawUrl = extractFinalImageUrl(data);
+
+        if (rawUrl) {
+          const absoluteUrl = getAbsoluteUrl(rawUrl);
+
+          if (typeof window !== "undefined") {
+            localStorage.setItem(
+              `scaleup2026:final_image_url:${email}`,
+              absoluteUrl,
+            );
+          }
+
+          toast.success("We found your AI avatar");
+          handleShowExistingImage(absoluteUrl);
+          return;
+        }
+
+        toast("Avatar not generated yet. Let’s create it now.");
+        handleOpenAvatarGenerator(data.user);
+        return;
+      }
+
+      if (response.status === 404) {
+        const errorMessage =
+          (data && (data.error || data.message || "")) || "";
+        const normalized = errorMessage.toLowerCase();
+
+        if (normalized.includes("image not generated")) {
+          toast("Avatar not generated yet. Let’s create it now.");
+          handleOpenAvatarGenerator(data.user);
+          return;
+        }
+
+        if (normalized.includes("user not found")) {
+          toast.error("Email not registered. Please register first.");
+          if (onOpenRegistration) {
+            onOpenRegistration();
+            setShowPhoneModal(false);
+          }
+          return;
+        }
+
+        toast.error(
+          data.error || "Could not find avatar details for this email.",
+        );
+        return;
+      }
+
+      toast.error(
+        data.error || "Failed to fetch avatar details. Please try again.",
+      );
+    } catch (error) {
+      console.error("Error fetching avatar by email:", error);
+      toast.error("Error fetching avatar details. Please try again.");
+    }
+  };
+
   const handleShowExistingImage = (url: string) => {
     const absUrl = getAbsoluteUrl(url);
     setExistingImageUrl(absUrl);
@@ -346,39 +414,9 @@ export function AiModalPop({
 
       const makemypassData = await makemypassRes.json().catch(() => ({}));
 
-      // Handle response based on status
       if (makemypassRes.status === 400) {
-        // User exists but needs verification -> Redirect to OTP verification
-        // Call /scaleup2026/otp/generate endpoint to create OTP
-        const otpRes = await fetch("https://scaleup.frameforge.one/scaleup2026/otp/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: mail,
-            phone_no: avatarRegistrationData?.phone_no || "0000000000",
-          }),
-        });
-
-        const otpData = await otpRes.json().catch(() => ({}));
-
-        if (otpRes.ok) {
-          setOtpSent(true);
-          setTimeLeft(600);
-          toast.success("OTP sent to your email");
-        } else {
-          console.error("Failed to send OTP", otpData);
-          if (otpRes.status === 404) {
-            toast.error("Email not registered. Please register first.");
-            if (onOpenRegistration) {
-              onOpenRegistration();
-              setShowPhoneModal(false);
-            }
-          } else {
-            toast.error(otpData.error || "Failed to send OTP. Please try again.");
-          }
-        }
+        await fetchAvatarByEmail(mail);
       } else if (makemypassRes.status === 404 || makemypassRes.status === 200) {
-        // User not registered -> Redirect to registration form
         toast.error("You are not registered. Please register first.");
         if (onOpenRegistration) {
           onOpenRegistration();
@@ -684,121 +722,43 @@ export function AiModalPop({
 
             {/* LEFT SIDE - Forms - Responsive Padding */}
             <div
-              className={`w-full h-auto md:h-full md:w-1/2 ${!otpSent ? "flex" : "grid"
-                } items-start md:items-center overflow-y-auto bg-white p-4 sm:p-6 md:p-4`}
+              className="w-full h-auto md:h-full md:w-1/2 flex items-start md:items-center overflow-y-auto bg-white p-4 sm:p-6 md:p-4"
             >
-
-              {!otpSent ? (
-                <>
-                  <div className="space-y-3 w-full">
-                    <p className="text-sm text-gray-600 font-bold">
-                      If you’re already registered and haven’t generated an avatar, please enter your registered email ID below.
-                    </p>
-                    <div className="flex flex-wrap justify-between items-center gap-2">
-                      <label className="text-xs sm:text-sm font-medium text-gray-700 block whitespace-nowrap">
-                        Email Address
-                      </label>
-                      <button
-                        onClick={() => {
-                          if (onOpenRegistration) onOpenRegistration();
-                          setShowPhoneModal(false);
-                        }}
-                        className="text-indigo-600 font-medium text-[10px] sm:text-xs underline hover:cursor-pointer text-right flex-1 sm:flex-none"
-                      >
-                        Not registered yet? Book now
-                      </button>
-                    </div>
-                    <div className="flex gap-2">
-                      <input
-                        type="email"
-                        placeholder="Enter Email Address"
-                        value={mail}
-                        onChange={(e) => setMail(e.target.value)}
-                        className="flex-1 px-3 py-2 sm:py-2.5 text-sm sm:text-base border-2 rounded-lg focus:ring-2 outline-none"
-                      />
-                    </div>
-                    <button
-                      onClick={handleSendMail}
-                      disabled={loading}
-                      className="w-full px-4 py-2 sm:py-2.5 text-sm sm:text-base rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {loading ? "Sending..." : "Get Code"}
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="space-y-4 w-full">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-sm sm:text-base font-bold text-gray-900 block">
-                        Enter OTP
-                      </label>
-                      <p className="text-xs text-gray-500">
-                        OTP sent to <span className="font-medium text-indigo-600">{mail}</span>
-                      </p>
-                    </div>
-
-                    <div className="relative">
-                      <input
-                        type="text"
-                        placeholder="Enter 6-digit OTP"
-                        value={otp}
-                        onChange={(e) =>
-                          setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
-                        }
-                        maxLength={6}
-                        className="w-full px-4 py-3 sm:py-4 border-2 border-indigo-500 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-600 outline-none text-center text-2xl sm:text-3xl font-bold tracking-[0.5em] sm:tracking-[0.75em] transition-all placeholder:text-gray-300 placeholder:tracking-normal placeholder:text-sm"
-                        autoFocus
-                      />
-                    </div>
-
-                    <button
-                      onClick={handleVerifyOtp}
-                      disabled={loading || otp.length !== 6}
-                      className="w-full px-4 py-3 sm:py-4 text-base sm:text-lg rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-200"
-                    >
-                      {loading ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Verifying...
-                        </span>
-                      ) : "Verify & Continue"}
-                    </button>
-
-                    <div className="flex flex-col gap-3">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Didn't receive code?</span>
-                        {timeLeft > 0 ? (
-                          <span className="text-indigo-600 font-bold bg-indigo-50 px-2 py-1 rounded">
-                            {formatTime(timeLeft)}
-                          </span>
-                        ) : (
-                          <button
-                            onClick={handleResendOtp}
-                            className="text-indigo-600 font-bold hover:text-indigo-700 underline underline-offset-4"
-                          >
-                            Resend OTP
-                          </button>
-                        )}
-                      </div>
-
-                      <button
-                        onClick={() => {
-                          resetForm();
-                          setOtpSent(false);
-                        }}
-                        className="w-full py-2 text-sm text-gray-500 font-medium hover:text-gray-700 transition-colors"
-                      >
-                        ← Use a different email
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-
+              <div className="space-y-3 w-full">
+                <p className="text-sm text-gray-600 font-bold">
+                  If you’re already registered and haven’t generated an avatar, please enter your registered email ID below.
+                </p>
+                <div className="flex flex-wrap justify-between items-center gap-2">
+                  <label className="text-xs sm:text-sm font-medium text-gray-700 block whitespace-nowrap">
+                    Email Address
+                  </label>
+                  <button
+                    onClick={() => {
+                      if (onOpenRegistration) onOpenRegistration();
+                      setShowPhoneModal(false);
+                    }}
+                    className="text-indigo-600 font-medium text-[10px] sm:text-xs underline hover:cursor-pointer text-right flex-1 sm:flex-none"
+                  >
+                    Not registered yet? Book now
+                  </button>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    placeholder="Enter Email Address"
+                    value={mail}
+                    onChange={(e) => setMail(e.target.value)}
+                    className="flex-1 px-3 py-2 sm:py-2.5 text-sm sm:text-base border-2 rounded-lg focus:ring-2 outline-none"
+                  />
+                </div>
+                <button
+                  onClick={handleSendMail}
+                  disabled={loading}
+                  className="w-full px-4 py-2 sm:py-2.5 text-sm sm:text-base rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? "Processing..." : "Continue"}
+                </button>
+              </div>
             </div>
 
             {/* RIGHT SIDE - Images/GIF - Shows at top on mobile, right side on md+ */}
