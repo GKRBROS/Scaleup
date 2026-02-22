@@ -14,15 +14,30 @@ export default function Home() {
   const hasShown = useRef(false);
 
   useEffect(() => {
-    // Check if showing for the first time
-    const hasSeen = localStorage.getItem("scaleup2026:whatsapp_seen");
-    if (hasShown.current || hasSeen) return;
+    // Check if showing for the first time (safe for environments without localStorage)
+    if (hasShown.current) return;
+
+    let hasSeen = false;
+    if (typeof window !== "undefined") {
+      try {
+        hasSeen =
+          window.localStorage.getItem("scaleup2026:whatsapp_seen") === "true";
+      } catch {
+        hasSeen = false;
+      }
+    }
+
+    if (hasSeen) return;
 
     const timer = setTimeout(() => {
       setOpen(true);
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("whatsapp-modal-opened"));
-        localStorage.setItem("scaleup2026:whatsapp_seen", "true");
+        try {
+          window.localStorage.setItem("scaleup2026:whatsapp_seen", "true");
+        } catch {
+          // Ignore storage failures in restricted environments
+        }
       }
       hasShown.current = true;
     }, 6000);
@@ -32,6 +47,8 @@ export default function Home() {
 
   // Listen for external close events (e.g. from AiModalPop)
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const closeHandler = () => setOpen(false);
     window.addEventListener("close-whatsapp-modal", closeHandler);
     return () => window.removeEventListener("close-whatsapp-modal", closeHandler);
