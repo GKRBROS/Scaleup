@@ -283,6 +283,17 @@ export function AnalyticsDashboard({ theme = "light" }: { theme?: AnalyticsTheme
   const usersSplit = snapshot?.usersSplit ?? baseSnapshot.usersSplit;
   const leaderboard = snapshot?.leaderboard ?? baseSnapshot.leaderboard;
 
+  const safeNewUsers =
+    typeof usersSplit.newUsers === "number" && Number.isFinite(usersSplit.newUsers)
+      ? usersSplit.newUsers
+      : 0;
+  const safeReturningUsers =
+    typeof usersSplit.returningUsers === "number" &&
+    Number.isFinite(usersSplit.returningUsers)
+      ? usersSplit.returningUsers
+      : 0;
+  const usersSplitTotal = safeNewUsers + safeReturningUsers;
+
   return (
     <div
       className={
@@ -807,7 +818,7 @@ export function AnalyticsDashboard({ theme = "light" }: { theme?: AnalyticsTheme
               </div>
             </div>
             <div className="relative flex-1 min-h-[200px]">
-              {usersSplit.newUsers + usersSplit.returningUsers === 0 ? (
+              {usersSplitTotal === 0 ? (
                 <div
                   className={
                     "absolute inset-0 flex items-center justify-center rounded-2xl border border-dashed " +
@@ -833,7 +844,7 @@ export function AnalyticsDashboard({ theme = "light" }: { theme?: AnalyticsTheme
                       New users
                     </span>
                     <span className="font-semibold">
-                      {usersSplit.newUsers.toLocaleString()}
+                      {safeNewUsers.toLocaleString()}
                     </span>
                   </div>
                   <div className="w-full h-2 rounded-full bg-slate-800/60 overflow-hidden">
@@ -842,9 +853,9 @@ export function AnalyticsDashboard({ theme = "light" }: { theme?: AnalyticsTheme
                       style={{
                         width: `${Math.min(
                           100,
-                          (usersSplit.newUsers /
-                            (usersSplit.newUsers + usersSplit.returningUsers)) *
-                            100 || 0,
+                          usersSplitTotal === 0
+                            ? 0
+                            : (safeNewUsers / usersSplitTotal) * 100 || 0,
                         ).toFixed(1)}%`,
                       }}
                     />
@@ -856,7 +867,7 @@ export function AnalyticsDashboard({ theme = "light" }: { theme?: AnalyticsTheme
                       Returning users
                     </span>
                     <span className="font-semibold">
-                      {usersSplit.returningUsers.toLocaleString()}
+                      {safeReturningUsers.toLocaleString()}
                     </span>
                   </div>
                 </div>
@@ -946,22 +957,33 @@ export function AnalyticsDashboard({ theme = "light" }: { theme?: AnalyticsTheme
                   <tbody
                     className={isDark ? "text-slate-200" : "text-slate-800"}
                   >
-                    {leaderboard.slice(0, 10).map((user, index) => (
-                      <tr key={user.id} className="border-t border-slate-800/40">
-                        <td className="py-2 pr-4">{index + 1}</td>
-                        <td className="py-2 pr-4">{user.name}</td>
-                        <td className="py-2 pr-4 truncate max-w-[160px]">
-                          {user.email}
-                        </td>
-                        <td className="py-2 pr-4 text-right">
-                          {user.views.toLocaleString()}
-                        </td>
-                        <td className="py-2 pr-4 text-right">
-                          {user.images.toLocaleString()}
-                        </td>
-                        <td className="py-2 text-right">{user.lastSeen}</td>
-                      </tr>
-                    ))}
+                    {leaderboard.slice(0, 10).map((user, index) => {
+                      const views =
+                        typeof user.views === "number" && Number.isFinite(user.views)
+                          ? user.views
+                          : 0;
+                      const images =
+                        typeof user.images === "number" && Number.isFinite(user.images)
+                          ? user.images
+                          : 0;
+
+                      return (
+                        <tr key={user.id} className="border-t border-slate-800/40">
+                          <td className="py-2 pr-4">{index + 1}</td>
+                          <td className="py-2 pr-4">{user.name}</td>
+                          <td className="py-2 pr-4 truncate max-w-[160px]">
+                            {user.email}
+                          </td>
+                          <td className="py-2 pr-4 text-right">
+                            {views.toLocaleString()}
+                          </td>
+                          <td className="py-2 pr-4 text-right">
+                            {images.toLocaleString()}
+                          </td>
+                          <td className="py-2 text-right">{user.lastSeen}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
