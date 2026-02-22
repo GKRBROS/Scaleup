@@ -780,7 +780,6 @@ function RegistrationForm({
     </div>
   );
 }
-
 /* ---------------- Ticket Selection Modal ---------------- */
 const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
   onClose,
@@ -793,95 +792,235 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
 }) => {
   const handleSelect = (type: "general" | "vip") => setSelectedTicket(type);
 
+  const cardClass = (type: "general" | "vip") =>
+    `cursor-pointer transition-all duration-150 overflow-hidden rounded-2xl border-2 ${
+      selectedTicket === type
+        ? "border-gray-900 shadow-md"
+        : "border-gray-200 hover:border-gray-400"
+    }`;
+
+  const generalBenefits = [
+    "Access to all sessions at the Main Venue",
+    "Access to the Expo Area",
+    "Access to panel discussions, keynote sessions, and networking areas",
+  ];
+
+  const vipBenefits = [
+    "Exclusive VIP Tag",
+    "Reserved Parking Slot",
+    "Complimentary food and refreshments with VIP Lounge access",
+    "Priority Seating for all main sessions",
+    "ScaleUp Goodies Kit",
+    "Exclusive networking opportunity with Guests, Speakers, and VIPs",
+  ];
+
   return (
-    <div className="p-8 md:p-10 lg:p-12 h-full relative bg-white">
-      <div className="flex justify-start items-center mb-8">
+    <div className="p-5 sm:p-6 md:p-8 lg:p-12 h-full relative bg-white overflow-y-auto">
+      {/* Back */}
+      <div className="flex justify-start items-center mb-4 sm:mb-5 md:mb-7 lg:mb-8">
         <button
           onClick={() => setStep("form")}
           className="text-gray-700 hover:text-gray-900 transition"
         >
-          <MoveLeft size={30} />
+          <MoveLeft size={24} />
         </button>
       </div>
 
-      <div className="mb-8">
+      {/* Heading */}
+      <div className="mb-4 sm:mb-5 md:mb-6 lg:mb-7">
         <h2
-          className="text-3xl md:text-4xl font-normal text-gray-900 mb-2"
-          style={{ fontFamily: 'Calsans, sans-serif' }}
+          className="font-normal text-gray-900 mb-1"
+          style={{
+            fontFamily: "Calsans, sans-serif",
+            fontSize: "clamp(1.25rem, 3vw, 2.25rem)",
+          }}
         >
           Choose your ticket type
         </h2>
-        <p className="text-sm md:text-base text-gray-500">
+        <p
+          className="text-gray-500"
+          style={{ fontSize: "clamp(0.7rem, 1.5vw, 1rem)" }}
+        >
           Both types will have different levels of access
         </p>
       </div>
 
-      <div className="space-y-4 mb-8 max-w-md">
-        {/* General Pass Card */}
-        <div
-          onClick={() => handleSelect("general")}
-          className={`group cursor-pointer transition-all duration-200 rounded-2xl p-5 border-2 ${selectedTicket === "general"
-            ? "border-gray-900 shadow-lg"
-            : "border-gray-300 hover:border-gray-400"
-            }`}
-          style={{ fontFamily: 'Calsans, sans-serif' }}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-normal text-gray-900">General Pass</h3>
-            <span className="text-xl font-normal text-gray-900">Free</span>
+      {/* Cards */}
+      <div className="space-y-3 md:space-y-4 mb-5 md:mb-7">
+
+        {/* ── General Pass ── */}
+        <div className={cardClass("general")} onClick={() => handleSelect("general")}>
+
+          {/* MOBILE only: stacked */}
+          <div className="flex flex-col sm:hidden">
+            <div className="flex flex-col bg-white p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-gray-900 font-bold text-base" style={{ fontFamily: "Calsans, sans-serif" }}>General Pass</span>
+                <span className="text-gray-900 font-bold text-base ml-2" style={{ fontFamily: "Calsans, sans-serif" }}>Free</span>
+              </div>
+              <img src="/assets/images/general.png" alt="General Pass"
+                className="w-full h-auto object-contain rounded-lg" style={{ maxHeight: "130px" }}
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+            </div>
+            <div className="flex flex-col justify-center p-4" style={{ backgroundColor: "#111111" }}>
+              <p className="text-white font-normal mb-2" style={{ fontFamily: "Calsans, sans-serif", fontSize: "12px" }}>Includes:</p>
+              <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+                {generalBenefits.map((item) => (
+                  <li key={item} className="flex items-start text-white leading-snug" style={{ fontFamily: "Calsans, sans-serif", fontSize: "11px", marginBottom: "5px", gap: "5px" }}>
+                    <span style={{ flexShrink: 0, marginTop: "2px" }}>•</span><span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
-          <div className="flex justify-center">
-            <img
-              src="/assets/images/general.png"
-              alt="General Pass"
-              className="w-full max-w-[280px] h-auto rounded-lg shadow-md"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
+
+          {/* TABLET (sm–md): side by side, compact text */}
+          <div className="hidden sm:flex md:hidden flex-row">
+            <div className="flex flex-col bg-white" style={{ flex: "0 0 42%", maxWidth: "42%", padding: "12px 12px" }}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-gray-900 font-bold" style={{ fontFamily: "Calsans, sans-serif", fontSize: "13px" }}>General Pass</span>
+                <span className="text-gray-900 font-bold ml-1" style={{ fontFamily: "Calsans, sans-serif", fontSize: "13px" }}>Free</span>
+              </div>
+              <div className="flex items-center justify-center flex-1">
+                <img src="/assets/images/general.png" alt="General Pass"
+                  className="w-full h-auto object-contain rounded-md" style={{ maxHeight: "110px" }}
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+              </div>
+            </div>
+            <div className="flex flex-col justify-center" style={{ backgroundColor: "#111111", flex: "1 1 0%", minWidth: 0, padding: "14px 14px" }}>
+              <p className="text-white font-normal mb-2" style={{ fontFamily: "Calsans, sans-serif", fontSize: "11px" }}>Includes:</p>
+              <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+                {generalBenefits.map((item) => (
+                  <li key={item} className="flex items-start text-white leading-snug" style={{ fontFamily: "Calsans, sans-serif", fontSize: "10px", marginBottom: "5px", gap: "4px" }}>
+                    <span style={{ flexShrink: 0, marginTop: "2px" }}>•</span><span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* DESKTOP (md+): side by side, full size */}
+          <div className="hidden md:flex flex-row">
+            <div className="flex flex-col bg-white p-5" style={{ flex: "0 0 44%", maxWidth: "44%", minWidth: "140px" }}>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-gray-900 font-bold text-lg" style={{ fontFamily: "Calsans, sans-serif" }}>General Pass</span>
+                <span className="text-gray-900 font-bold text-lg ml-2" style={{ fontFamily: "Calsans, sans-serif" }}>Free</span>
+              </div>
+              <div className="flex items-center justify-center flex-1">
+                <img src="/assets/images/general.png" alt="General Pass"
+                  className="w-full h-auto object-contain rounded-lg" style={{ maxHeight: "140px" }}
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+              </div>
+            </div>
+            <div className="flex flex-col justify-center px-5 py-5" style={{ backgroundColor: "#111111", flex: "1 1 0%", minWidth: 0 }}>
+              <p className="text-white font-normal mb-2" style={{ fontFamily: "Calsans, sans-serif", fontSize: "13px" }}>Includes:</p>
+              <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+                {generalBenefits.map((item) => (
+                  <li key={item} className="flex items-start text-white leading-snug" style={{ fontFamily: "Calsans, sans-serif", fontSize: "12px", marginBottom: "6px", gap: "5px" }}>
+                    <span style={{ flexShrink: 0, marginTop: "2px" }}>•</span><span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
 
-        {/* VIP Pass Card */}
-        <div
-          onClick={() => handleSelect("vip")}
-          className={`group cursor-pointer transition-all duration-200 rounded-2xl p-5 border-2 ${selectedTicket === "vip"
-            ? "border-gray-900 shadow-lg"
-            : "border-gray-300 hover:border-gray-400"
-            }`}
-          style={{ fontFamily: 'Calsans, sans-serif' }}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-normal text-gray-900">Vip Pass</h3>
-            <span className="text-xl font-normal text-gray-900">₹10,000</span>
+        {/* ── VIP Pass ── */}
+        <div className={cardClass("vip")} onClick={() => handleSelect("vip")}>
+
+          {/* MOBILE */}
+          <div className="flex flex-col sm:hidden">
+            <div className="flex flex-col bg-white p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-gray-900 font-bold text-base" style={{ fontFamily: "Calsans, sans-serif" }}>Vip Pass</span>
+                <span className="text-gray-900 font-bold text-base ml-2" style={{ fontFamily: "Calsans, sans-serif" }}>₹10,000</span>
+              </div>
+              <img src="/assets/images/vip.png" alt="VIP Pass"
+                className="w-full h-auto object-contain rounded-lg" style={{ maxHeight: "160px" }}
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+            </div>
+            <div className="flex flex-col justify-center p-4" style={{ backgroundColor: "#111111" }}>
+              <p className="text-white font-normal mb-2" style={{ fontFamily: "Calsans, sans-serif", fontSize: "12px" }}>Includes everything in the Free Ticket, plus:</p>
+              <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+                {vipBenefits.map((item) => (
+                  <li key={item} className="flex items-start text-white leading-snug" style={{ fontFamily: "Calsans, sans-serif", fontSize: "11px", marginBottom: "5px", gap: "5px" }}>
+                    <span style={{ flexShrink: 0, marginTop: "2px" }}>•</span><span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
-          <div className="flex justify-center">
-            <img
-              src="/assets/images/vip.png"
-              alt="VIP Pass"
-              className="w-full max-w-[280px] h-auto rounded-lg shadow-md"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
+
+          {/* TABLET */}
+          <div className="hidden sm:flex md:hidden flex-row">
+            <div className="flex flex-col bg-white" style={{ flex: "0 0 42%", maxWidth: "42%", padding: "12px 12px" }}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-gray-900 font-bold" style={{ fontFamily: "Calsans, sans-serif", fontSize: "13px" }}>Vip Pass</span>
+                <span className="text-gray-900 font-bold ml-1" style={{ fontFamily: "Calsans, sans-serif", fontSize: "13px" }}>₹10,000</span>
+              </div>
+              <div className="flex items-center justify-center flex-1">
+                <img src="/assets/images/vip.png" alt="VIP Pass"
+                  className="w-full h-auto object-contain rounded-md" style={{ maxHeight: "130px" }}
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+              </div>
+            </div>
+            <div className="flex flex-col justify-center" style={{ backgroundColor: "#111111", flex: "1 1 0%", minWidth: 0, padding: "14px 14px" }}>
+              <p className="text-white font-normal mb-2" style={{ fontFamily: "Calsans, sans-serif", fontSize: "11px" }}>Includes everything in the Free Ticket, plus:</p>
+              <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+                {vipBenefits.map((item) => (
+                  <li key={item} className="flex items-start text-white leading-snug" style={{ fontFamily: "Calsans, sans-serif", fontSize: "10px", marginBottom: "5px", gap: "4px" }}>
+                    <span style={{ flexShrink: 0, marginTop: "2px" }}>•</span><span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* DESKTOP */}
+          <div className="hidden md:flex flex-row">
+            <div className="flex flex-col bg-white p-5" style={{ flex: "0 0 44%", maxWidth: "44%", minWidth: "140px" }}>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-gray-900 font-bold text-lg" style={{ fontFamily: "Calsans, sans-serif" }}>Vip Pass</span>
+                <span className="text-gray-900 font-bold text-lg ml-2" style={{ fontFamily: "Calsans, sans-serif" }}>₹10,000</span>
+              </div>
+              <div className="flex items-center justify-center flex-1">
+                <img src="/assets/images/vip.png" alt="VIP Pass"
+                  className="w-full h-auto object-contain rounded-lg" style={{ maxHeight: "170px" }}
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+              </div>
+            </div>
+            <div className="flex flex-col justify-center px-5 py-5" style={{ backgroundColor: "#111111", flex: "1 1 0%", minWidth: 0 }}>
+              <p className="text-white font-normal mb-3" style={{ fontFamily: "Calsans, sans-serif", fontSize: "13px" }}>Includes everything in the Free Ticket, plus:</p>
+              <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+                {vipBenefits.map((item) => (
+                  <li key={item} className="flex items-start text-white leading-snug" style={{ fontFamily: "Calsans, sans-serif", fontSize: "12px", marginBottom: "6px", gap: "5px" }}>
+                    <span style={{ flexShrink: 0, marginTop: "2px" }}>•</span><span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="pt-2 pb-4 max-w-md">
+      {/* Continue Button */}
+      <div className="pt-1 pb-6 sm:pb-4">
         <button
           onClick={handleRegister}
           disabled={loading || !selectedTicket || registerStatus === "submitted"}
-          className="w-full py-4 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ fontSize: '16px' }}
+          className="w-full sm:w-3/4 md:w-1/2 py-3 md:py-4 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ fontSize: "15px" }}
         >
-          {loading ? "Processing..." : registerStatus === "submitted" ? "Submitted" : "Continue"}
+          {loading
+            ? "Processing..."
+            : registerStatus === "submitted"
+            ? "Submitted"
+            : "Continue"}
         </button>
       </div>
     </div>
   );
 };
-
 /* ---------------- Success Right Side Component ---------------- */
 function SuccessRightSide({ ticketID }: { ticketID: string }) {
   return (
