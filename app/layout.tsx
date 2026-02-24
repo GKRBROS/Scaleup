@@ -19,6 +19,21 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Google Tag (gtag.js) */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-PNFLS5WH87"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-PNFLS5WH87');
+          `}
+        </Script>
+      </head>
       <body suppressHydrationWarning>
         <Toaster position="top-center" reverseOrder={false} />
         {/* Razorpay Checkout Script */}
