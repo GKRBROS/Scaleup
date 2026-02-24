@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { allCountries } from "country-telephone-data";
 import AvatarGeneratorModal from "@/components/AvatarGeneratorModal";
 import AiModalPop from "./AiModalPop";
+import { analytics } from "@/lib/analytics";
 
 interface RegistrationModalProps {
   isOpen: boolean;
@@ -65,6 +66,7 @@ export default function RegistrationModal({
     if (isOpen) {
       document.body.style.overflow = "hidden";
       window.dispatchEvent(new CustomEvent("registration-modal-opened"));
+      analytics.registrationOpen();
 
       // Reset form and step when opening
       setStep("form");
@@ -195,10 +197,11 @@ export default function RegistrationModal({
           const verifyResult = await verifyRes.json();
 
           if (verifyRes.ok && !verifyResult.hasError) {
-            toast.success("Payment successful");
-            setTicketID(verifyResult.response.event_register_id);
-            setStep("success");
-          } else {
+        toast.success("Payment successful");
+        setTicketID(verifyResult.response.event_register_id);
+        setStep("success");
+        analytics.registrationSuccess("vip");
+      } else {
             toast.error("Payment verification failed");
           }
         } catch (err) {
@@ -380,6 +383,7 @@ export default function RegistrationModal({
       );
       setRegisterStatus("submitted");
       setStep("success");
+      analytics.registrationSuccess(selectedTicket || "general");
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);
@@ -1243,6 +1247,7 @@ function SuccessModal({
           <a
             href={`/api/proxy-image?url=${encodeURIComponent(ticketImageUrl)}&filename=scaleup-ticket-${ticketCode}.png&disposition=attachment`}
             download={`scaleup-ticket-${ticketCode}.png`}
+            onClick={() => analytics.ticketDownload()}
             className="w-full py-3 bg-gray-100 text-gray-900 font-semibold rounded-xl hover:bg-gray-200 transition-all shadow-sm mb-4 flex items-center justify-center gap-2"
             style={{ fontSize: '14px' }}
           >

@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { toast, Toaster } from "react-hot-toast";
+import { analytics } from "@/lib/analytics";
 import AvatarGeneratorModal from "@/components/AvatarGeneratorModal";
 
 interface AvatarRegistrationData {
@@ -688,9 +689,9 @@ export function AiModalPop({
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-
       console.log("handleDownloadExistingImage: Download triggered successfully");
       toast.success("Download started!");
+      analytics.imageGenDownload();
     } catch (error) {
       console.error("handleDownloadExistingImage: Error during download process:", error);
       toast.error("Download failed. Opening in new tab instead.");

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-hot-toast";
+import { analytics } from "@/lib/analytics";
 
 interface AvatarRegistrationData {
   user_id?: string;
@@ -519,6 +520,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
     setIsGenerating(true);
     setGeneratedImageUrl("");
     setIsGenerated(false);
+    analytics.imageGenStart(generationType);
 
     // Ensure generationType is valid, fallback to superhero if needed
     // Use the explicitly selected generation type
@@ -641,6 +643,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
             setGeneratedImageUrl(imageUrl);
             setIsGenerated(true);
             setIsGenerating(false);
+            analytics.imageGenSuccess(finalGenerationType);
             return;
           }
         }
@@ -708,6 +711,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
           setGeneratedImageUrl(imageWithBuster);
           setIsGenerated(true);
           setIsGenerating(false);
+          analytics.imageGenSuccess(finalGenerationType);
 
           // After successful generation, update the DB with final image info if user_id is present
           if (result.user_id) {
@@ -738,6 +742,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
         if (imageUrl) {
           setGeneratedImageUrl(imageUrl);
           setIsGenerated(true);
+          analytics.imageGenSuccess(finalGenerationType);
 
           // Also update DB after polling success
           try {
@@ -760,10 +765,12 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
 
       toast.error("Your image is in the queue; your generated image will be sent to you shortly.");
       setIsGenerating(false);
+      analytics.imageGenError("queue_timeout");
     } catch (error) {
       console.error("Error generating avatar:", error);
       toast.error("Your image is in the queue; your generated image will be sent to you shortly.");
       setIsGenerating(false);
+      analytics.imageGenError(error instanceof Error ? error.message : "unknown_error");
     }
   };
 
@@ -854,6 +861,7 @@ const AvatarGeneratorModal: React.FC<AvatarGeneratorModalProps> = ({
       window.URL.revokeObjectURL(url);
       console.log("handleDownload: Download triggered successfully");
       toast.success("Download started!");
+      analytics.imageGenDownload(generationType);
     } catch (error) {
       console.error("handleDownload: Error during download process:", error);
       toast.error("Download failed. Opening in new tab.");
