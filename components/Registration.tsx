@@ -1172,6 +1172,30 @@ function SuccessModal({
   const userPhone = guestData?.phone || "+91XXXXXXXXXX";
   const ticketCode = guestData?.id || ticketID;
 
+  const handleDownloadAndProceed = async () => {
+    // 1. Trigger Analytics
+    analytics.ticketDownload();
+    analytics.goToAvatarClick();
+
+    // 2. Trigger Download if URL is available
+    if (ticketImageUrl) {
+      try {
+        const downloadUrl = `/api/proxy-image?url=${encodeURIComponent(ticketImageUrl)}&filename=scaleup-ticket-${ticketCode}.png&disposition=attachment`;
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.download = `scaleup-ticket-${ticketCode}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (error) {
+        console.error("Failed to trigger ticket download:", error);
+      }
+    }
+
+    // 3. Move to next step
+    setStep("avatar");
+  };
+
   return (
     <div className="p-8 md:p-10 lg:p-12 pt-12 md:pt-8 lg:pt-24 lg:mt-10 lg:pb-12 relative h-full bg-white flex flex-col justify-center">
       <div className="max-w-lg">
@@ -1242,32 +1266,29 @@ function SuccessModal({
           )}
         </div>
 
-        {/* Download Ticket Button */}
-        {ticketImageUrl && !loading && (
-          <a
-            href={`/api/proxy-image?url=${encodeURIComponent(ticketImageUrl)}&filename=scaleup-ticket-${ticketCode}.png&disposition=attachment`}
-            download={`scaleup-ticket-${ticketCode}.png`}
-            onClick={() => analytics.ticketDownload()}
-            className="w-full py-3 bg-gray-100 text-gray-900 font-semibold rounded-xl hover:bg-gray-200 transition-all shadow-sm mb-4 flex items-center justify-center gap-2"
-            style={{ fontSize: '14px' }}
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            Download Ticket
-          </a>
-        )}
-
-        {/* Next Step Button */}
+        {/* Combined Action Button */}
         <button
-          onClick={() => {
-            setStep("avatar");
-            analytics.goToAvatarClick();
-          }}
+          onClick={handleDownloadAndProceed}
           disabled={loading}
-          className="w-full py-4 mb-10 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-4 mb-10 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 group"
+          style={{ fontSize: '16px' }}
         >
-          {loading ? "Loading..." : "Next Step : Generate your AI Avatar"}
+          {loading ? (
+            <>
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              <span>Processing...</span>
+            </>
+          ) : (
+            <>
+              <svg className="w-5 h-5 group-hover:translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              <span>Download Ticket & Generate AI Avatar</span>
+              <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </>
+          )}
         </button>
       </div>
     </div>
