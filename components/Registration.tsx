@@ -1205,6 +1205,7 @@ function SuccessModal({
 
   const handleBoringDownload = async () => {
     analytics.ticketDownload();
+    analytics.boringExit();
     await downloadTicketImage();
     onClose();
   };

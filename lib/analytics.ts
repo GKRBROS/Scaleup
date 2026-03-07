@@ -39,6 +39,7 @@ export const analytics = {
   registrationSuccess: (method: string) => 
     trackEvent({ action: "flow_step_4_reg_success", category: "funnel", label: method }),
   goToAvatarClick: () => trackEvent({ action: "flow_step_5_go_to_avatar", category: "funnel" }),
+  boringExit: () => trackEvent({ action: "flow_step_5_exit_boring", category: "funnel" }),
   avatarModalOpen: () => trackEvent({ action: "flow_step_6_avatar_open", category: "funnel" }),
   imageGenStart: (type: string) => 
     trackEvent({ action: "flow_step_7_gen_start", category: "funnel", label: type }),
