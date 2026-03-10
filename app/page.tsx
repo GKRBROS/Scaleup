@@ -9,6 +9,11 @@ import Navbar from "@/components/Navbar";
 import { Whatsapp } from "@/components/whatsapp";
 import Marque from "@/components/Marque";
 import { analytics } from "@/lib/analytics";
+import Speaker from "@/components/Speakers"
+import PartnersSection from "@/components/Partners";
+import ScaleupEventRoster from "@/components/EventRoster";
+import About from "@/components/About";
+
 
 export default function Home() {
   const [open, setOpen] = useState(false);
@@ -60,12 +65,17 @@ export default function Home() {
   }, []);
   return (
     <main className="flex flex-col overflow-hidden">
-      <Navbar />
+       <Navbar />
       <Marque />
       <Hero />
       <Date />
+      <About/>
+      <Speaker/>
+      
       <Banner />
       <Involved />
+      <ScaleupEventRoster/>
+      <PartnersSection/>
       <Footer />
       <Whatsapp open={open} setOpen={setOpen} />
     </main>
