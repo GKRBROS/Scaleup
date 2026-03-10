@@ -4,28 +4,37 @@ import { useEffect, useState } from "react";
 
 export default function PartnersSection() {
 
-  const defaultPartners = [
-    { logo: "/assets/images/image.png" },
-    { logo: "/assets/images/image.png" },
-    { logo: "/assets/images/image.png" },
-    { logo: "/assets/images/image.png" },
-  ];
-
-  const [partners, setPartners] = useState(defaultPartners);
+  const [partners, setPartners] = useState<any[]>([]);
 
   useEffect(() => {
 
-    const stored = localStorage.getItem("partners");
+    fetch(
+      "https://docs.google.com/spreadsheets/d/1AFLLBXt2K6IbA5dXCdtke_dd_6S0Jo0lRxbOdh9ZWL4/gviz/tq?tqx=out:json&gid=1144311292"
+    )
+      .then(res => res.text())
+      .then(data => {
 
-    if (stored) {
+        const json = JSON.parse(data.substring(47).slice(0, -2));
 
-      const adminPartners = JSON.parse(stored);
+        const rows = json.table.rows.map((row: any) => {
 
-      if (adminPartners.length > 0) {
-        setPartners(adminPartners);
-      }
+          const link = row.c[0]?.v || "";
 
-    }
+          let logo = link;
+
+          const match = link.match(/\/d\/(.*?)\//);
+
+          if (match) {
+            logo = `https://lh3.googleusercontent.com/d/${match[1]}`;
+          }
+
+          return { logo };
+
+        });
+
+        setPartners(rows);
+
+      });
 
   }, []);
 
@@ -35,8 +44,6 @@ export default function PartnersSection() {
 
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        {/* TITLE */}
-
         <div className="flex justify-center mb-14">
 
           <span className="inline-block border border-b-black rounded-4xl px-10 py-2.5 text-[20px] font-bold tracking-[0.3em] uppercase text-black bg-white ">
@@ -45,15 +52,13 @@ export default function PartnersSection() {
 
         </div>
 
-        {/* GRID */}
-
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
 
-          {partners.map((partner: any, index) => (
+          {partners.map((partner, index) => (
 
             <div
               key={index}
-              className="flex items-center justify-center h-28 rounded-2xl border bg-white hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer px-6 py-4"
+              className="flex items-center justify-center h-28 rounded-2xl border bg-white hover:shadow-lg hover:-translate-y-1 transition-all duration-300 px-6 py-4"
             >
 
               <img
