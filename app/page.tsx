@@ -69,12 +69,12 @@ export default function Home() {
       <Marque />
       <Hero />
       <Date />
-      <About/>
+      {/* <About/> */}
       <Speaker/>
       
       <Banner />
       <Involved />
-      <ScaleupEventRoster/>
+      {/* <ScaleupEventRoster/> */}
       <PartnersSection/>
       <Footer />
       <Whatsapp open={open} setOpen={setOpen} />
