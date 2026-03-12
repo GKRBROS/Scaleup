@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 const cards = [
   {
@@ -34,56 +34,38 @@ const cards = [
   },
 ];
 
-function Involved() {
+export default function Involved() {
   const [activeCard, setActiveCard] = useState(0);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   return (
-    <section className="mx-auto max-w-8xl px-4 py-6 sm:px-6 lg:px-8">
+    <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
       {/* Header */}
-      <div className="flex items-start justify-between mb-12">
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between mb-12 gap-6">
         <div className="flex-1">
-          <h2
-            className="font-semibold"
-            style={{ fontSize: isMobile ? "40px" : "60px", color: "#202020" }}
-          >
+          <h2 className="font-semibold font-plusJakarta text-4xl sm:text-5xl lg:text-[60px] text-[#202020]">
             Get Involved
           </h2>
-          <p
-            className="mt-4 font-light"
-            style={{
-              fontSize: isMobile ? "18px" : "28px",
-              lineHeight: isMobile ? "22px" : "36px",
-              color: "#4B5563",
-            }}
-          >
+
+          <p className="mt-4 font-light font-plusJakarta text-base sm:text-lg lg:text-[28px] leading-snug lg:leading-[36px] text-gray-600">
             Be part of Kerala's biggest AI & Technology Conclave and connect
-            <br />
+            <br className="hidden sm:block" />
             with innovators, leaders, and enthusiasts from across the country.
           </p>
         </div>
-        {!isMobile && (
-          <img
-            src="/assets/images/img_icon2.svg"
-            alt="Decorative icons"
-            className="h-8"
-          />
-        )}
+
+        {/* Decorative icon only on laptop */}
+        <img
+          src="/assets/images/img_icon2.svg"
+          alt="Decorative icons"
+          className="hidden lg:block h-10"
+        />
       </div>
 
-      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Cards */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((card) => {
           const isActive = activeCard === card.id;
-          const rectangle = isActive
-            ? "/assets/images/rectangle_green.svg"
-            : "/assets/images/rectangle_blue.svg";
+
           const arrow = isActive
             ? "/assets/images/arrow_icon_green.svg"
             : "/assets/images/arrow_icon_blue.svg";
@@ -92,68 +74,64 @@ function Involved() {
             <div
               key={card.id}
               onClick={() => setActiveCard(card.id)}
-              className="flex h-full flex-col justify-between rounded-3xl border p-8 shadow-sm transition hover:shadow-lg cursor-pointer"
-              style={{
-                borderColor: "#000",
-                backgroundColor: isActive ? "#1E90FF" : "#FFFFFF",
-                color: isActive ? "#FFFFFF" : "#202020",
-              }}
+              className="flex h-full flex-col overflow-hidden rounded-3xl shadow-sm transition-all duration-300 hover:shadow-xl cursor-pointer"
             >
-              <div>
-                {/* Rectangle with inner icon */}
-                <div className="relative inline-block">
-                  <img
-                    src={rectangle}
-                    alt="Card background icon"
-                    className="h-12 w-12"
-                  />
-                  <img
-                    src={card.icon}
-                    style={{
-                      filter: isActive ? "none" : "brightness(0) invert(1)",
-                    }}
-                    alt={card.title}
-                    className="absolute inset-0 m-auto h-6 w-6"
-                  />
-                </div>
-
-                <h3
-                  className="mt-8 text-2xl font-bold"
-                  style={{ fontSize: isMobile ? "20px" : "24px" }}
-                >
-                  {card.title}
-                </h3>
-                <p
-                  className="mt-3"
-                  style={{
-                    fontSize: isMobile ? "14px" : "16px",
-                    lineHeight: "22px",
-                  }}
-                >
-                  {card.description}
-                </p>
-              </div>
-
-              <a
-                href={card.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-4 flex items-center gap-4 font-semibold no-underline"
+              {/* Color Band */}
+              <div
+                className="h-10 bg-cover bg-center"
                 style={{
-                  fontSize: isMobile ? "14px" : "16px",
-                  color: isActive ? "#FFFFFF" : "black",
+                  backgroundImage: "url('/assets/images/color.jpg')",
+                }}
+              />
+
+              {/* Content */}
+              <div
+                className="flex flex-1 flex-col justify-between p-6 sm:p-7 lg:p-8 rounded-2xl -mt-3 transition-colors duration-300"
+                style={{
+                  backgroundColor: isActive ? "#1E1E1E" : "#2A2A2A",
+                  color: "#FFFFFF",
                 }}
               >
-                <span>Apply Now</span>
-                <img
-                  src={arrow}
-                  alt="Arrow icon"
-                  style={{
-                    height: isMobile ? "40px" : "56px",
-                    width: isMobile ? "48px" : "64px",
-                  }}
-                />
-              </a>
+                <div>
+                  {/* Icon */}
+                  <div
+                    className="inline-flex items-center justify-center rounded-xl p-3 sm:p-4"
+                    style={{ backgroundColor: "#1E90FF" }}
+                  >
+                    <img
+                      src={card.icon}
+                      alt={card.title}
+                      className="h-5 w-5 sm:h-6 sm:w-6"
+                      style={{
+                        filter: "brightness(0) invert(1)",
+                      }}
+                    />
+                  </div>
+
+                  <h3 className="mt-6 sm:mt-8 font-bold font-plusJakarta text-lg sm:text-xl lg:text-2xl text-white">
+                    {card.title}
+                  </h3>
+
+                  <p className="mt-3 font-plusJakarta text-sm sm:text-[15px] leading-relaxed text-gray-400">
+                    {card.description}
+                  </p>
+                </div>
+
+                <a
+                  href={card.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-6 flex items-center justify-between font-semibold font-plusJakarta text-sm sm:text-base text-white no-underline"
+                >
+                  <span>Apply Now</span>
+
+                  <img
+                    src={arrow}
+                    alt="Arrow icon"
+                    className="h-10 w-12 sm:h-12 sm:w-14 lg:h-14 lg:w-16 transition-transform duration-300 group-hover:translate-x-1"
+                  />
+                </a>
+              </div>
             </div>
           );
         })}
@@ -161,5 +139,3 @@ function Involved() {
     </section>
   );
 }
-
-export default Involved;
