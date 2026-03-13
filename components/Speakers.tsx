@@ -68,9 +68,9 @@ export default function SpeakersSection() {
 
           <div className="flex flex-col items-center lg:items-start">
 
-            <span className="text-6xl sm:text-7xl lg:text-9xl font-bold">
+            {/* <span className="text-6xl sm:text-7xl lg:text-9xl font-bold">
               04
-            </span>
+            </span> */}
 
             <div className="mt-3 inline-flex items-center justify-center px-5 py-2.5 border-2 border-black rounded-full bg-white">
               <span className="text-lg sm:text-xl lg:text-3xl">
