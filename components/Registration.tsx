@@ -2,12 +2,59 @@
 
 import { Instagram, MoveLeft, X } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
-import Script from "next/script";
 import { useState, useEffect } from "react";
 import { allCountries } from "country-telephone-data";
 import AvatarGeneratorModal from "@/components/AvatarGeneratorModal";
 import AiModalPop from "./AiModalPop";
 import { analytics } from "@/lib/analytics";
+
+declare global {
+  interface Window {
+    fbq?: (...args: unknown[]) => void;
+  }
+}
+
+const buildFbEventId = () => {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+
+  return `scaleup-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
+const trackRegistrationWithMeta = async (payload: {
+  email: string;
+  phone: string;
+  name: string;
+}) => {
+  const eventId = buildFbEventId();
+
+  if (typeof window !== "undefined" && typeof window.fbq === "function") {
+    window.fbq("track", "CompleteRegistration", {}, { eventID: eventId });
+  }
+
+  try {
+    const response = await fetch("/api/fb-conversion", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        eventName: "CompleteRegistration",
+        email: payload.email,
+        phone: payload.phone,
+        name: payload.name,
+        eventId,
+        eventSourceUrl: typeof window !== "undefined" ? window.location.href : undefined,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorResult = await response.json().catch(() => null);
+      console.error("FB CAPI error response:", errorResult || response.statusText);
+    }
+  } catch (error) {
+    console.error("FB CAPI error:", error);
+  }
+};
 
 interface RegistrationModalProps {
   isOpen: boolean;
@@ -202,16 +249,11 @@ export default function RegistrationModal({
         setTicketID(verifyResult.response.event_register_id);
         setStep("success");
         analytics.registrationSuccess("vip");
-        fetch('/api/fb-conversion', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            eventName: 'CompleteRegistration',
-            email: formData.email,
-            phone: formData.countryCode.replace('+', '') + formData.phone,
-            name: formData.name
-          })
-        }).catch(err => console.error("FB CAPI error:", err));
+        void trackRegistrationWithMeta({
+          email: formData.email,
+          phone: formData.countryCode.replace('+', '') + formData.phone,
+          name: formData.name,
+        });
       } else {
             toast.error("Payment verification failed");
           }
@@ -395,17 +437,12 @@ export default function RegistrationModal({
       setRegisterStatus("submitted");
       setStep("success");
       analytics.registrationSuccess(selectedTicket || "general");
-      
-      fetch('/api/fb-conversion', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          eventName: 'CompleteRegistration',
-          email: formData.email,
-          phone: formData.countryCode.replace('+', '') + formData.phone,
-          name: formData.name
-        })
-      }).catch(err => console.error("FB CAPI error:", err));
+
+      void trackRegistrationWithMeta({
+        email: formData.email,
+        phone: formData.countryCode.replace('+', '') + formData.phone,
+        name: formData.name,
+      });
     } catch (error) {
       toast.error("Something went wrong");
       console.error(error);
@@ -1234,30 +1271,6 @@ function SuccessModal({
 
   return (
     <div className="p-8 md:p-10 lg:p-12 pt-12 md:pt-8 lg:pt-24 lg:mt-10 lg:pb-12 relative h-full bg-white flex flex-col justify-center">
-      {/* Meta Pixel Code - CompleteRegistration */}
-      <Script id="meta-pixel-complete-registration">
-        {`
-          !function(f,b,e,v,n,t,s)
-          {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-          n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-          if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-          n.queue=[];t=b.createElement(e);t.async=!0;
-          t.src=v;s=b.getElementsByTagName(e)[0];
-          s.parentNode.insertBefore(t,s)}(window, document,'script',
-          'https://connect.facebook.net/en_US/fbevents.js');
-          fbq('init', '1101350224207637');
-          fbq('track', 'CompleteRegistration');
-        `}
-      </Script>
-      <noscript>
-        <img
-          height="1"
-          width="1"
-          style={{ display: "none" }}
-          src="https://www.facebook.com/tr?id=1101350224207637&ev=PageView&noscript=1"
-          alt=""
-        />
-      </noscript>
       <div className="max-w-lg">
         <h1
           className="text-4xl md:text-5xl font-normal text-gray-900 mb-4"
