@@ -43,13 +43,17 @@ const trackRegistrationWithMeta = async (payload: {
         phone: payload.phone,
         name: payload.name,
         eventId,
-        eventSourceUrl: typeof window !== "undefined" ? window.location.href : undefined,
+        eventSourceUrl:
+          typeof window !== "undefined" ? window.location.href : undefined,
       }),
     });
 
     if (!response.ok) {
       const errorResult = await response.json().catch(() => null);
-      console.error("FB CAPI error response:", errorResult || response.statusText);
+      console.error(
+        "FB CAPI error response:",
+        errorResult || response.statusText,
+      );
     }
   } catch (error) {
     console.error("FB CAPI error:", error);
@@ -190,7 +194,7 @@ export default function RegistrationModal({
 
     formData1.append(
       "did_you_attend_the_previous_scaleup_conclave_",
-      formData.previousAttendance
+      formData.previousAttendance,
     );
 
     try {
@@ -239,22 +243,22 @@ export default function RegistrationModal({
                 payment_id: response.razorpay_payment_id,
                 gateway: "Razorpay",
               }),
-            }
+            },
           );
 
           const verifyResult = await verifyRes.json();
 
           if (verifyRes.ok && !verifyResult.hasError) {
-        toast.success("Payment successful");
-        setTicketID(verifyResult.response.event_register_id);
-        setStep("success");
-        analytics.registrationSuccess("vip");
-        void trackRegistrationWithMeta({
-          email: formData.email,
-          phone: formData.countryCode.replace('+', '') + formData.phone,
-          name: formData.name,
-        });
-      } else {
+            toast.success("Payment successful");
+            setTicketID(verifyResult.response.event_register_id);
+            setStep("success");
+            analytics.registrationSuccess("vip");
+            void trackRegistrationWithMeta({
+              email: formData.email,
+              phone: formData.countryCode.replace("+", "") + formData.phone,
+              name: formData.name,
+            });
+          } else {
             toast.error("Payment verification failed");
           }
         } catch (err) {
@@ -308,7 +312,7 @@ export default function RegistrationModal({
       payload.append("category", formData.category);
       payload.append(
         "did_you_attend_the_previous_scaleup_conclave_",
-        formData.previousAttendance
+        formData.previousAttendance,
       );
 
       const tickets = [
@@ -336,7 +340,7 @@ export default function RegistrationModal({
         {
           method: "POST",
           body: payload,
-        }
+        },
       );
 
       const result = await response.json();
@@ -374,7 +378,10 @@ export default function RegistrationModal({
           organization: formData.organization,
         };
         const storageKey = `scaleup2026:registration_data:${formData.email.toLowerCase().trim()}`;
-        console.log("Storing registration data to localStorage with key:", storageKey);
+        console.log(
+          "Storing registration data to localStorage with key:",
+          storageKey,
+        );
         localStorage.setItem(storageKey, JSON.stringify(userDataToStore));
       }
 
@@ -397,7 +404,7 @@ export default function RegistrationModal({
               "Content-Type": "application/json",
             },
             body: JSON.stringify(registerPayload),
-          }
+          },
         );
 
         const registerResult = await registerResponse.json();
@@ -416,7 +423,9 @@ export default function RegistrationModal({
           // Store user_id in localStorage for later use
           if (typeof window !== "undefined") {
             const storageKey = `scaleup2026:registration_data:${formData.email.toLowerCase().trim()}`;
-            const storedData = JSON.parse(localStorage.getItem(storageKey) || "{}");
+            const storedData = JSON.parse(
+              localStorage.getItem(storageKey) || "{}",
+            );
             storedData.user_id = registerResult.user_id;
             localStorage.setItem(storageKey, JSON.stringify(storedData));
           }
@@ -432,7 +441,7 @@ export default function RegistrationModal({
       // SUCCESS - Show success and open avatar modal
       toast.success("Registration successful");
       setTicketID(
-        result.response?.event_register_id || "TEST-TICKET-" + Date.now()
+        result.response?.event_register_id || "TEST-TICKET-" + Date.now(),
       );
       setRegisterStatus("submitted");
       setStep("success");
@@ -440,7 +449,7 @@ export default function RegistrationModal({
 
       void trackRegistrationWithMeta({
         email: formData.email,
-        phone: formData.countryCode.replace('+', '') + formData.phone,
+        phone: formData.countryCode.replace("+", "") + formData.phone,
         name: formData.name,
       });
     } catch (error) {
@@ -466,9 +475,7 @@ export default function RegistrationModal({
   return (
     <>
       {/* Overlay with backdrop blur */}
-      <div
-        className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm overflow-y-auto flex items-start md:items-center justify-center"
-      >
+      <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm overflow-y-auto flex items-start md:items-center justify-center">
         {/* Modal Container - Full screen on mobile, split on desktop */}
         <div className="relative w-full min-h-full md:min-h-0 md:h-auto md:max-h-[90vh] md:max-w-6xl md:rounded-2xl overflow-hidden bg-white shadow-2xl flex flex-col md:flex-row m-0 md:m-4">
           {step !== "success" && (
@@ -481,7 +488,9 @@ export default function RegistrationModal({
           )}
 
           {/* LEFT SIDE - Forms */}
-          <div className={`w-full overflow-y-auto bg-white flex-1 ${step === "avatar" ? "" : "md:w-1/2"}`}>
+          <div
+            className={`w-full overflow-y-auto bg-white flex-1 ${step === "avatar" ? "" : "md:w-1/2"}`}
+          >
             {step === "form" && (
               <RegistrationForm
                 formData={formData}
@@ -525,7 +534,12 @@ export default function RegistrationModal({
                     onClose();
                   }}
                   registrationData={{
-                    user_id: JSON.parse(localStorage.getItem(`scaleup2026:registration_data:${formData.email.toLowerCase().trim()}`) || "{}").user_id || "",
+                    user_id:
+                      JSON.parse(
+                        localStorage.getItem(
+                          `scaleup2026:registration_data:${formData.email.toLowerCase().trim()}`,
+                        ) || "{}",
+                      ).user_id || "",
                     name: formData.name,
                     email: formData.email,
                     phone_no: formData.phone,
@@ -549,7 +563,7 @@ export default function RegistrationModal({
                     alt="Register"
                     className="w-full h-full object-fill"
                     onError={(e) => {
-                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.style.display = "none";
                     }}
                   />
                 </div>
@@ -562,7 +576,7 @@ export default function RegistrationModal({
                     alt="Choose Ticket"
                     className="w-full h-full object-fill"
                     onError={(e) => {
-                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.style.display = "none";
                     }}
                   />
                 </div>
@@ -594,7 +608,7 @@ function RegistrationForm({
   handleSubmit,
   onClose,
   showPhoneModal,
-  setShowPhoneModal
+  setShowPhoneModal,
 }: {
   formData: FormFields;
   handleChange: (
@@ -612,12 +626,13 @@ function RegistrationForm({
     <div className="p-8 md:p-10 lg:p-12 relative h-full bg-white">
       <h1
         className="text-4xl md:text-5xl font-normal text-gray-900 mb-2"
-        style={{ fontFamily: 'Calsans, sans-serif' }}
+        style={{ fontFamily: "Calsans, sans-serif" }}
       >
         Register Now!
       </h1>
       <p className="text-lg md:text-base mb-8 text-gray-500 ">
-        Secure your spot and be part of the excitement! Register now to receive your entry pass.
+        Secure your spot and be part of the excitement! Register now to receive
+        your entry pass.
       </p>
 
       <form className="space-y-4" onSubmit={handleSubmit}>
@@ -754,20 +769,35 @@ function RegistrationForm({
             <option value="" disabled>
               Select your category
             </option>
-            <option value="Startups" className="text-gray-900">Startups</option>
-            <option value="Working Professionals" className="text-gray-900">Working Professionals</option>
-            <option value="Students" className="text-gray-900">Students</option>
-            <option value="Business Owners" className="text-gray-900">Business Owners</option>
-            <option value="NRI / Gulf Retunees" className="text-gray-900">NRI / Gulf Retunees</option>
-            <option value="Government Officials" className="text-gray-900">Government Officials</option>
-            <option value="Others" className="text-gray-900">Others</option>
+            <option value="Startups" className="text-gray-900">
+              Startups
+            </option>
+            <option value="Working Professionals" className="text-gray-900">
+              Working Professionals
+            </option>
+            <option value="Students" className="text-gray-900">
+              Students
+            </option>
+            <option value="Business Owners" className="text-gray-900">
+              Business Owners
+            </option>
+            <option value="NRI / Gulf Retunees" className="text-gray-900">
+              NRI / Gulf Retunees
+            </option>
+            <option value="Government Officials" className="text-gray-900">
+              Government Officials
+            </option>
+            <option value="Others" className="text-gray-900">
+              Others
+            </option>
           </select>
         </div>
 
         {/* Organization */}
         <div>
           <label className="block text-sm font-medium text-gray-900 mb-1.5">
-            School / College / Organization <span className="text-red-500">*</span>
+            School / College / Organization{" "}
+            <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -786,7 +816,8 @@ function RegistrationForm({
         {/* Previous Attendance */}
         <div>
           <label className="block text-sm font-medium text-gray-900 mb-3">
-            Did you attend the previous ScaleUp Conclave? <span className="text-red-500">*</span>
+            Did you attend the previous ScaleUp Conclave?{" "}
+            <span className="text-red-500">*</span>
           </label>
           <div className="flex gap-6">
             <label className="flex items-center gap-2 cursor-pointer group">
@@ -799,7 +830,9 @@ function RegistrationForm({
                 className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                 required
               />
-              <span className="text-gray-700 group-hover:text-blue-600 transition">Yes</span>
+              <span className="text-gray-700 group-hover:text-blue-600 transition">
+                Yes
+              </span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer group">
               <input
@@ -811,7 +844,9 @@ function RegistrationForm({
                 className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                 required
               />
-              <span className="text-gray-700 group-hover:text-blue-600 transition">No</span>
+              <span className="text-gray-700 group-hover:text-blue-600 transition">
+                No
+              </span>
             </label>
           </div>
         </div>
@@ -828,7 +863,7 @@ function RegistrationForm({
 
         <div className="text-left pb-2">
           <p className="text-sm text-gray-600">
-            Already have an account?{' '}
+            Already have an account?{" "}
             <span
               onClick={() => {
                 onClose(); // close registration modal
@@ -838,7 +873,6 @@ function RegistrationForm({
             >
               Go here
             </span>
-
           </p>
         </div>
       </form>
@@ -912,27 +946,62 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
 
       {/* Cards */}
       <div className="space-y-3 md:space-y-4 mb-5 md:mb-7">
-
         {/* ── General Pass ── */}
-        <div className={cardClass("general")} onClick={() => handleSelect("general")}>
-
+        <div
+          className={cardClass("general")}
+          onClick={() => handleSelect("general")}
+        >
           {/* MOBILE only: stacked */}
           <div className="flex flex-col sm:hidden">
             <div className="flex flex-col bg-white p-4">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-gray-900 font-bold text-base" style={{ fontFamily: "Calsans, sans-serif" }}>General Pass</span>
-                <span className="text-gray-900 font-bold text-base ml-2" style={{ fontFamily: "Calsans, sans-serif" }}>Free</span>
+                <span
+                  className="text-gray-900 font-bold text-base"
+                  style={{ fontFamily: "Calsans, sans-serif" }}
+                >
+                  General Pass
+                </span>
+                <span
+                  className="text-gray-900 font-bold text-base ml-2"
+                  style={{ fontFamily: "Calsans, sans-serif" }}
+                >
+                  Free
+                </span>
               </div>
-              <img src="/assets/images/general.png" alt="General Pass"
-                className="w-full h-auto object-contain rounded-lg" style={{ maxHeight: "130px" }}
-                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+              <img
+                src="/assets/images/general.png"
+                alt="General Pass"
+                className="w-full h-auto object-contain rounded-lg"
+                style={{ maxHeight: "130px" }}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                }}
+              />
             </div>
-            <div className="flex flex-col justify-center p-4" style={{ backgroundColor: "#111111" }}>
-              <p className="text-white font-normal mb-2" style={{ fontFamily: "Calsans, sans-serif", fontSize: "12px" }}>Includes:</p>
+            <div
+              className="flex flex-col justify-center p-4"
+              style={{ backgroundColor: "#111111" }}
+            >
+              <p
+                className="text-white font-normal mb-2"
+                style={{ fontFamily: "Calsans, sans-serif", fontSize: "12px" }}
+              >
+                Includes:
+              </p>
               <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
                 {generalBenefits.map((item) => (
-                  <li key={item} className="flex items-start text-white leading-snug" style={{ fontFamily: "Calsans, sans-serif", fontSize: "11px", marginBottom: "5px", gap: "5px" }}>
-                    <span style={{ flexShrink: 0, marginTop: "2px" }}>•</span><span>{item}</span>
+                  <li
+                    key={item}
+                    className="flex items-start text-white leading-snug"
+                    style={{
+                      fontFamily: "Calsans, sans-serif",
+                      fontSize: "11px",
+                      marginBottom: "5px",
+                      gap: "5px",
+                    }}
+                  >
+                    <span style={{ flexShrink: 0, marginTop: "2px" }}>•</span>
+                    <span>{item}</span>
                   </li>
                 ))}
               </ul>
@@ -941,23 +1010,72 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
 
           {/* TABLET (sm–md): side by side, compact text */}
           <div className="hidden sm:flex md:hidden flex-row">
-            <div className="flex flex-col bg-white" style={{ flex: "0 0 42%", maxWidth: "42%", padding: "12px 12px" }}>
+            <div
+              className="flex flex-col bg-white"
+              style={{ flex: "0 0 42%", maxWidth: "42%", padding: "12px 12px" }}
+            >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-gray-900 font-bold" style={{ fontFamily: "Calsans, sans-serif", fontSize: "13px" }}>General Pass</span>
-                <span className="text-gray-900 font-bold ml-1" style={{ fontFamily: "Calsans, sans-serif", fontSize: "13px" }}>Free</span>
+                <span
+                  className="text-gray-900 font-bold"
+                  style={{
+                    fontFamily: "Calsans, sans-serif",
+                    fontSize: "13px",
+                  }}
+                >
+                  General Pass
+                </span>
+                <span
+                  className="text-gray-900 font-bold ml-1"
+                  style={{
+                    fontFamily: "Calsans, sans-serif",
+                    fontSize: "13px",
+                  }}
+                >
+                  Free
+                </span>
               </div>
               <div className="flex items-center justify-center flex-1">
-                <img src="/assets/images/general.png" alt="General Pass"
-                  className="w-full h-auto object-contain rounded-md" style={{ maxHeight: "110px" }}
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+                <img
+                  src="/assets/images/general.png"
+                  alt="General Pass"
+                  className="w-full h-auto object-contain rounded-md"
+                  style={{ maxHeight: "110px" }}
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display =
+                      "none";
+                  }}
+                />
               </div>
             </div>
-            <div className="flex flex-col justify-center" style={{ backgroundColor: "#111111", flex: "1 1 0%", minWidth: 0, padding: "14px 14px" }}>
-              <p className="text-white font-normal mb-2" style={{ fontFamily: "Calsans, sans-serif", fontSize: "11px" }}>Includes:</p>
+            <div
+              className="flex flex-col justify-center"
+              style={{
+                backgroundColor: "#111111",
+                flex: "1 1 0%",
+                minWidth: 0,
+                padding: "14px 14px",
+              }}
+            >
+              <p
+                className="text-white font-normal mb-2"
+                style={{ fontFamily: "Calsans, sans-serif", fontSize: "11px" }}
+              >
+                Includes:
+              </p>
               <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
                 {generalBenefits.map((item) => (
-                  <li key={item} className="flex items-start text-white leading-snug" style={{ fontFamily: "Calsans, sans-serif", fontSize: "10px", marginBottom: "5px", gap: "4px" }}>
-                    <span style={{ flexShrink: 0, marginTop: "2px" }}>•</span><span>{item}</span>
+                  <li
+                    key={item}
+                    className="flex items-start text-white leading-snug"
+                    style={{
+                      fontFamily: "Calsans, sans-serif",
+                      fontSize: "10px",
+                      marginBottom: "5px",
+                      gap: "4px",
+                    }}
+                  >
+                    <span style={{ flexShrink: 0, marginTop: "2px" }}>•</span>
+                    <span>{item}</span>
                   </li>
                 ))}
               </ul>
@@ -966,23 +1084,65 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
 
           {/* DESKTOP (md+): side by side, full size */}
           <div className="hidden md:flex flex-row">
-            <div className="flex flex-col bg-white p-5" style={{ flex: "0 0 44%", maxWidth: "44%", minWidth: "140px" }}>
+            <div
+              className="flex flex-col bg-white p-5"
+              style={{ flex: "0 0 44%", maxWidth: "44%", minWidth: "140px" }}
+            >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-gray-900 font-bold text-lg" style={{ fontFamily: "Calsans, sans-serif" }}>General Pass</span>
-                <span className="text-gray-900 font-bold text-lg ml-2" style={{ fontFamily: "Calsans, sans-serif" }}>Free</span>
+                <span
+                  className="text-gray-900 font-bold text-lg"
+                  style={{ fontFamily: "Calsans, sans-serif" }}
+                >
+                  General Pass
+                </span>
+                <span
+                  className="text-gray-900 font-bold text-lg ml-2"
+                  style={{ fontFamily: "Calsans, sans-serif" }}
+                >
+                  Free
+                </span>
               </div>
               <div className="flex items-center justify-center flex-1">
-                <img src="/assets/images/general.png" alt="General Pass"
-                  className="w-full h-auto object-contain rounded-lg" style={{ maxHeight: "140px" }}
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+                <img
+                  src="/assets/images/general.png"
+                  alt="General Pass"
+                  className="w-full h-auto object-contain rounded-lg"
+                  style={{ maxHeight: "140px" }}
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display =
+                      "none";
+                  }}
+                />
               </div>
             </div>
-            <div className="flex flex-col justify-center px-5 py-5" style={{ backgroundColor: "#111111", flex: "1 1 0%", minWidth: 0 }}>
-              <p className="text-white font-normal mb-2" style={{ fontFamily: "Calsans, sans-serif", fontSize: "13px" }}>Includes:</p>
+            <div
+              className="flex flex-col justify-center px-5 py-5"
+              style={{
+                backgroundColor: "#111111",
+                flex: "1 1 0%",
+                minWidth: 0,
+              }}
+            >
+              <p
+                className="text-white font-normal mb-2"
+                style={{ fontFamily: "Calsans, sans-serif", fontSize: "13px" }}
+              >
+                Includes:
+              </p>
               <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
                 {generalBenefits.map((item) => (
-                  <li key={item} className="flex items-start text-white leading-snug" style={{ fontFamily: "Calsans, sans-serif", fontSize: "12px", marginBottom: "6px", gap: "5px" }}>
-                    <span style={{ flexShrink: 0, marginTop: "2px" }}>•</span><span>{item}</span>
+                  <li
+                    key={item}
+                    className="flex items-start text-white leading-snug"
+                    style={{
+                      fontFamily: "Calsans, sans-serif",
+                      fontSize: "12px",
+                      marginBottom: "6px",
+                      gap: "5px",
+                    }}
+                  >
+                    <span style={{ flexShrink: 0, marginTop: "2px" }}>•</span>
+                    <span>{item}</span>
                   </li>
                 ))}
               </ul>
@@ -992,24 +1152,57 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
 
         {/* ── VIP Pass ── */}
         <div className={cardClass("vip")} onClick={() => handleSelect("vip")}>
-
           {/* MOBILE */}
           <div className="flex flex-col sm:hidden">
             <div className="flex flex-col bg-white p-4">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-gray-900 font-bold text-base" style={{ fontFamily: "Calsans, sans-serif" }}>Vip Pass</span>
-                <span className="text-gray-900 font-bold text-base ml-2" style={{ fontFamily: "Calsans, sans-serif" }}>₹10,000</span>
+                <span
+                  className="text-gray-900 font-bold text-base"
+                  style={{ fontFamily: "Calsans, sans-serif" }}
+                >
+                  Vip Pass
+                </span>
+                <span
+                  className="text-gray-900 font-bold text-base ml-2"
+                  style={{ fontFamily: "Calsans, sans-serif" }}
+                >
+                  ₹10,000
+                </span>
               </div>
-              <img src="/assets/images/vip.png" alt="VIP Pass"
-                className="w-full h-auto object-contain rounded-lg" style={{ maxHeight: "160px" }}
-                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+              <img
+                src="/assets/images/vip.png"
+                alt="VIP Pass"
+                className="w-full h-auto object-contain rounded-lg"
+                style={{ maxHeight: "160px" }}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                }}
+              />
             </div>
-            <div className="flex flex-col justify-center p-4" style={{ backgroundColor: "#111111" }}>
-              <p className="text-white font-normal mb-2" style={{ fontFamily: "Calsans, sans-serif", fontSize: "12px" }}>Includes everything in the Free Ticket, plus:</p>
+            <div
+              className="flex flex-col justify-center p-4"
+              style={{ backgroundColor: "#111111" }}
+            >
+              <p
+                className="text-white font-normal mb-2"
+                style={{ fontFamily: "Calsans, sans-serif", fontSize: "12px" }}
+              >
+                Includes everything in the Free Ticket, plus:
+              </p>
               <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
                 {vipBenefits.map((item) => (
-                  <li key={item} className="flex items-start text-white leading-snug" style={{ fontFamily: "Calsans, sans-serif", fontSize: "11px", marginBottom: "5px", gap: "5px" }}>
-                    <span style={{ flexShrink: 0, marginTop: "2px" }}>•</span><span>{item}</span>
+                  <li
+                    key={item}
+                    className="flex items-start text-white leading-snug"
+                    style={{
+                      fontFamily: "Calsans, sans-serif",
+                      fontSize: "11px",
+                      marginBottom: "5px",
+                      gap: "5px",
+                    }}
+                  >
+                    <span style={{ flexShrink: 0, marginTop: "2px" }}>•</span>
+                    <span>{item}</span>
                   </li>
                 ))}
               </ul>
@@ -1018,23 +1211,72 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
 
           {/* TABLET */}
           <div className="hidden sm:flex md:hidden flex-row">
-            <div className="flex flex-col bg-white" style={{ flex: "0 0 42%", maxWidth: "42%", padding: "12px 12px" }}>
+            <div
+              className="flex flex-col bg-white"
+              style={{ flex: "0 0 42%", maxWidth: "42%", padding: "12px 12px" }}
+            >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-gray-900 font-bold" style={{ fontFamily: "Calsans, sans-serif", fontSize: "13px" }}>Vip Pass</span>
-                <span className="text-gray-900 font-bold ml-1" style={{ fontFamily: "Calsans, sans-serif", fontSize: "13px" }}>₹10,000</span>
+                <span
+                  className="text-gray-900 font-bold"
+                  style={{
+                    fontFamily: "Calsans, sans-serif",
+                    fontSize: "13px",
+                  }}
+                >
+                  Vip Pass
+                </span>
+                <span
+                  className="text-gray-900 font-bold ml-1"
+                  style={{
+                    fontFamily: "Calsans, sans-serif",
+                    fontSize: "13px",
+                  }}
+                >
+                  ₹10,000
+                </span>
               </div>
               <div className="flex items-center justify-center flex-1">
-                <img src="/assets/images/vip.png" alt="VIP Pass"
-                  className="w-full h-auto object-contain rounded-md" style={{ maxHeight: "130px" }}
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+                <img
+                  src="/assets/images/vip.png"
+                  alt="VIP Pass"
+                  className="w-full h-auto object-contain rounded-md"
+                  style={{ maxHeight: "130px" }}
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display =
+                      "none";
+                  }}
+                />
               </div>
             </div>
-            <div className="flex flex-col justify-center" style={{ backgroundColor: "#111111", flex: "1 1 0%", minWidth: 0, padding: "14px 14px" }}>
-              <p className="text-white font-normal mb-2" style={{ fontFamily: "Calsans, sans-serif", fontSize: "11px" }}>Includes everything in the Free Ticket, plus:</p>
+            <div
+              className="flex flex-col justify-center"
+              style={{
+                backgroundColor: "#111111",
+                flex: "1 1 0%",
+                minWidth: 0,
+                padding: "14px 14px",
+              }}
+            >
+              <p
+                className="text-white font-normal mb-2"
+                style={{ fontFamily: "Calsans, sans-serif", fontSize: "11px" }}
+              >
+                Includes everything in the Free Ticket, plus:
+              </p>
               <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
                 {vipBenefits.map((item) => (
-                  <li key={item} className="flex items-start text-white leading-snug" style={{ fontFamily: "Calsans, sans-serif", fontSize: "10px", marginBottom: "5px", gap: "4px" }}>
-                    <span style={{ flexShrink: 0, marginTop: "2px" }}>•</span><span>{item}</span>
+                  <li
+                    key={item}
+                    className="flex items-start text-white leading-snug"
+                    style={{
+                      fontFamily: "Calsans, sans-serif",
+                      fontSize: "10px",
+                      marginBottom: "5px",
+                      gap: "4px",
+                    }}
+                  >
+                    <span style={{ flexShrink: 0, marginTop: "2px" }}>•</span>
+                    <span>{item}</span>
                   </li>
                 ))}
               </ul>
@@ -1043,23 +1285,65 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
 
           {/* DESKTOP */}
           <div className="hidden md:flex flex-row">
-            <div className="flex flex-col bg-white p-5" style={{ flex: "0 0 44%", maxWidth: "44%", minWidth: "140px" }}>
+            <div
+              className="flex flex-col bg-white p-5"
+              style={{ flex: "0 0 44%", maxWidth: "44%", minWidth: "140px" }}
+            >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-gray-900 font-bold text-lg" style={{ fontFamily: "Calsans, sans-serif" }}>Vip Pass</span>
-                <span className="text-gray-900 font-bold text-lg ml-2" style={{ fontFamily: "Calsans, sans-serif" }}>₹10,000</span>
+                <span
+                  className="text-gray-900 font-bold text-lg"
+                  style={{ fontFamily: "Calsans, sans-serif" }}
+                >
+                  Vip Pass
+                </span>
+                <span
+                  className="text-gray-900 font-bold text-lg ml-2"
+                  style={{ fontFamily: "Calsans, sans-serif" }}
+                >
+                  ₹10,000
+                </span>
               </div>
               <div className="flex items-center justify-center flex-1">
-                <img src="/assets/images/vip.png" alt="VIP Pass"
-                  className="w-full h-auto object-contain rounded-lg" style={{ maxHeight: "170px" }}
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+                <img
+                  src="/assets/images/vip.png"
+                  alt="VIP Pass"
+                  className="w-full h-auto object-contain rounded-lg"
+                  style={{ maxHeight: "170px" }}
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display =
+                      "none";
+                  }}
+                />
               </div>
             </div>
-            <div className="flex flex-col justify-center px-5 py-5" style={{ backgroundColor: "#111111", flex: "1 1 0%", minWidth: 0 }}>
-              <p className="text-white font-normal mb-3" style={{ fontFamily: "Calsans, sans-serif", fontSize: "13px" }}>Includes everything in the Free Ticket, plus:</p>
+            <div
+              className="flex flex-col justify-center px-5 py-5"
+              style={{
+                backgroundColor: "#111111",
+                flex: "1 1 0%",
+                minWidth: 0,
+              }}
+            >
+              <p
+                className="text-white font-normal mb-3"
+                style={{ fontFamily: "Calsans, sans-serif", fontSize: "13px" }}
+              >
+                Includes everything in the Free Ticket, plus:
+              </p>
               <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
                 {vipBenefits.map((item) => (
-                  <li key={item} className="flex items-start text-white leading-snug" style={{ fontFamily: "Calsans, sans-serif", fontSize: "12px", marginBottom: "6px", gap: "5px" }}>
-                    <span style={{ flexShrink: 0, marginTop: "2px" }}>•</span><span>{item}</span>
+                  <li
+                    key={item}
+                    className="flex items-start text-white leading-snug"
+                    style={{
+                      fontFamily: "Calsans, sans-serif",
+                      fontSize: "12px",
+                      marginBottom: "6px",
+                      gap: "5px",
+                    }}
+                  >
+                    <span style={{ flexShrink: 0, marginTop: "2px" }}>•</span>
+                    <span>{item}</span>
                   </li>
                 ))}
               </ul>
@@ -1072,15 +1356,17 @@ const TicketTypeModal: React.FC<TicketTypeModalProps> = ({
       <div className="pt-1 pb-6 sm:pb-4">
         <button
           onClick={handleRegister}
-          disabled={loading || !selectedTicket || registerStatus === "submitted"}
+          disabled={
+            loading || !selectedTicket || registerStatus === "submitted"
+          }
           className="w-full sm:w-3/4 md:w-1/2 py-3 md:py-4 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ fontSize: "15px" }}
         >
           {loading
             ? "Processing..."
             : registerStatus === "submitted"
-            ? "Submitted"
-            : "Continue"}
+              ? "Submitted"
+              : "Continue"}
         </button>
       </div>
     </div>
@@ -1137,7 +1423,9 @@ function SuccessModal({
   ticketID,
 }: {
   onClose: () => void;
-  setStep: React.Dispatch<React.SetStateAction<"form" | "ticket" | "success" | "avatar">>;
+  setStep: React.Dispatch<
+    React.SetStateAction<"form" | "ticket" | "success" | "avatar">
+  >;
   ticketID: string;
 }) {
   const [guestData, setGuestData] = useState<any>(null);
@@ -1155,7 +1443,7 @@ function SuccessModal({
       data?.image,
       data?.image_url,
       data?.ticket_url,
-      data?.download_url
+      data?.download_url,
     ];
 
     for (const url of ticketCandidates) {
@@ -1173,7 +1461,11 @@ function SuccessModal({
     for (const url of ticketCandidates) {
       if (typeof url === "string" && url.trim()) {
         const lowUrl = url.toLowerCase();
-        if (!lowUrl.includes("frameforge") && !lowUrl.includes("/final/") && !lowUrl.includes("/generated/")) {
+        if (
+          !lowUrl.includes("frameforge") &&
+          !lowUrl.includes("/final/") &&
+          !lowUrl.includes("/generated/")
+        ) {
           return url.trim();
         }
       }
@@ -1192,7 +1484,7 @@ function SuccessModal({
             headers: {
               "Content-Type": "application/json",
             },
-          }
+          },
         );
 
         if (response.ok) {
@@ -1206,15 +1498,24 @@ function SuccessModal({
             console.log("SuccessModal: Validated Ticket image URL:", imageUrl);
             setTicketImageUrl(imageUrl);
           } else {
-            console.error("SuccessModal: No valid TICKET image URL found in response:", data);
+            console.error(
+              "SuccessModal: No valid TICKET image URL found in response:",
+              data,
+            );
             // If no explicit ticket URL found, but we have a generic image, check it carefully
             const genericImage = data?.image || data?.response?.image;
-            if (genericImage && !genericImage.toLowerCase().includes("frameforge")) {
+            if (
+              genericImage &&
+              !genericImage.toLowerCase().includes("frameforge")
+            ) {
               setTicketImageUrl(genericImage);
             }
           }
         } else {
-          console.error("SuccessModal: Failed to fetch ticket data, status:", response.status);
+          console.error(
+            "SuccessModal: Failed to fetch ticket data, status:",
+            response.status,
+          );
         }
       } catch (error) {
         console.error("SuccessModal: Error fetching ticket data:", error);
@@ -1238,11 +1539,13 @@ function SuccessModal({
     try {
       const safeName = (userName || "guest").toLowerCase().replace(/\s+/g, "_");
       const filename = `${safeName}_scaleupticket.png`;
-      
-      const response = await fetch(`/api/proxy-image?url=${encodeURIComponent(ticketImageUrl)}`);
+
+      const response = await fetch(
+        `/api/proxy-image?url=${encodeURIComponent(ticketImageUrl)}`,
+      );
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
-      
+
       const link = document.createElement("a");
       link.href = blobUrl;
       link.download = filename;
@@ -1274,7 +1577,7 @@ function SuccessModal({
       <div className="max-w-lg">
         <h1
           className="text-4xl md:text-5xl font-normal text-gray-900 mb-4"
-          style={{ fontFamily: 'Calsans, sans-serif' }}
+          style={{ fontFamily: "Calsans, sans-serif" }}
         >
           Congrats your ticket has been generated
         </h1>
@@ -1282,12 +1585,14 @@ function SuccessModal({
         {loading ? (
           <div className="flex items-center gap-2 mb-8">
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-600"></div>
-            <p className="text-base text-gray-600">Loading your ticket details...</p>
+            <p className="text-base text-gray-600">
+              Loading your ticket details...
+            </p>
           </div>
         ) : (
           <p className="text-base text-gray-600 mb-8">
-            Great news! Your ticket has been sent to your email{" "}
-            and WhatsApp along with the invoice. Please check them to confirm.
+            Great news! Your ticket has been sent to your email and WhatsApp
+            along with the invoice. Please check them to confirm.
           </p>
         )}
 
@@ -1302,13 +1607,17 @@ function SuccessModal({
                 </div>
               </div>
               <p className="mt-4 text-sm font-medium text-gray-600">
-                {loading ? "Fetching ticket details..." : "Rendering your ticket..."}
+                {loading
+                  ? "Fetching ticket details..."
+                  : "Rendering your ticket..."}
               </p>
             </div>
           ) : null}
 
           {ticketImageUrl && (
-            <div className={`rounded-xl overflow-hidden shadow-lg transition-all duration-700 ease-in-out ${isImageLoading ? 'opacity-0 scale-95 h-0' : 'opacity-100 scale-100 h-auto'}`}>
+            <div
+              className={`rounded-xl overflow-hidden shadow-lg transition-all duration-700 ease-in-out ${isImageLoading ? "opacity-0 scale-95 h-0" : "opacity-100 scale-100 h-auto"}`}
+            >
               <img
                 src={ticketImageUrl}
                 alt="Your Event Ticket"
@@ -1317,7 +1626,7 @@ function SuccessModal({
                 onError={(e) => {
                   console.error("Failed to load ticket image:", ticketImageUrl);
                   setIsImageLoading(false);
-                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.style.display = "none";
                   const parent = e.currentTarget.parentElement;
                   if (parent) {
                     parent.innerHTML = `<div class="bg-gray-200 rounded-xl h-64 flex items-center justify-center px-6 text-center">
@@ -1332,8 +1641,12 @@ function SuccessModal({
           {!loading && !ticketImageUrl && !isImageLoading && (
             <div className="bg-gray-200 rounded-xl h-64 flex items-center justify-center">
               <div className="text-center px-4">
-                <p className="text-gray-600 text-sm mb-2 font-medium">Ticket image not available</p>
-                <p className="text-gray-500 text-xs">Your ticket has been sent to your email</p>
+                <p className="text-gray-600 text-sm mb-2 font-medium">
+                  Ticket image not available
+                </p>
+                <p className="text-gray-500 text-xs">
+                  Your ticket has been sent to your email
+                </p>
               </div>
             </div>
           )}
@@ -1352,12 +1665,34 @@ function SuccessModal({
             </>
           ) : (
             <>
-              <svg className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 group-hover:translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              <svg
+                className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 group-hover:translate-y-0.5 transition-transform"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                />
               </svg>
-              <span className="text-[13px] xs:text-sm sm:text-base whitespace-nowrap">Download Ticket & Generate AI Avatar</span>
-              <svg className="hidden xs:block w-4 h-4 sm:w-5 sm:h-5 shrink-0 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              <span className="text-[13px] xs:text-sm sm:text-base whitespace-nowrap">
+                Download Ticket & Generate AI Avatar
+              </span>
+              <svg
+                className="hidden xs:block w-4 h-4 sm:w-5 sm:h-5 shrink-0 group-hover:translate-x-1 transition-transform"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 7l5 5m0 0l-5 5m5-5H6"
+                />
               </svg>
             </>
           )}
@@ -1372,7 +1707,9 @@ function SuccessModal({
           {loading ? (
             <span className="text-sm sm:text-base">Processing...</span>
           ) : (
-            <span className="text-[13px] xs:text-sm sm:text-base whitespace-nowrap">Download Basic Ticket & Exit</span>
+            <span className="text-[13px] xs:text-sm sm:text-base whitespace-nowrap">
+              Download Basic Ticket & Exit
+            </span>
           )}
         </button>
       </div>
